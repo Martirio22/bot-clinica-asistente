@@ -1,0 +1,1 @@
+const NotFoundError=require("../../../../shared/errors/NotFoundError"); class EliminarRole{constructor(roleRepository){this.roleRepository=roleRepository;} async ejecutar(id){const r=await this.roleRepository.findById(id); if(!r) throw new NotFoundError("Rol no encontrado"); await this.roleRepository.softDelete(id);}} module.exports=EliminarRole;

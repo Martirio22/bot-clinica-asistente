@@ -1,0 +1,1 @@
+class ListarUserRoles{constructor(repo){this.repo=repo;} async ejecutar(){return await this.repo.findAll();}} module.exports=ListarUserRoles;

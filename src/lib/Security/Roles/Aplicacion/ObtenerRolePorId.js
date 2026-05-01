@@ -1,0 +1,1 @@
+const NotFoundError=require("../../../../shared/errors/NotFoundError"); class ObtenerRolePorId{constructor(roleRepository){this.roleRepository=roleRepository;} async ejecutar(id){const r=await this.roleRepository.findById(id); if(!r) throw new NotFoundError("Rol no encontrado"); return r;}} module.exports=ObtenerRolePorId;

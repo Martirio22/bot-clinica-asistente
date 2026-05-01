@@ -1,0 +1,1 @@
+class RemoverRoleDeUser{constructor(repo){this.repo=repo;} async ejecutar(userId, roleId){await this.repo.remove(userId, roleId);}} module.exports=RemoverRoleDeUser;

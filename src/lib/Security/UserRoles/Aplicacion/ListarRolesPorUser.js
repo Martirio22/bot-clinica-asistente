@@ -1,0 +1,1 @@
+class ListarRolesPorUser{constructor(repo){this.repo=repo;} async ejecutar(userId){return await this.repo.findByUserId(userId);}} module.exports=ListarRolesPorUser;
