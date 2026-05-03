@@ -4,7 +4,7 @@ const BranchModel = require("./BranchModel");
 class BranchRepositorySequelize {
 
     toDomain(model) {
-    const plain = model.toJSON();
+    const plain = model.toJSON ? model.toJSON() : model;
     return new Branch({
       id: plain.id,
       name: plain.name,

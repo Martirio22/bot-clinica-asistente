@@ -11,7 +11,8 @@ require("../../lib/Security/Auth/Infraestructura/RefreshTokenModel");
 
 require("../../lib/Clinic/Branches/Infraestructura/BranchModel");
 require("../../lib/Clinic/Offices/Infraestructura/OfficeModel");
-
+require("../../lib/Clinic/Specialties/Infraestructura/SpecialtyModel");
+require("../../lib/Clinic/Doctors/Infraestructura/DoctorModel");
 async function syncPostgres() {
   setupSecurityAssociations();
   setupClinicAssociations();
