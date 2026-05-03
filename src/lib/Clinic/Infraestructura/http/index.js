@@ -4,7 +4,8 @@ const TokenService = require("../../../../shared/security/TokenService");
 const BranchRepositorySequelize = require("../../Branches/Infraestructura/BranchRepositorySequelize");
 const OfficeRepositorySequelize = require("../../Offices/Infraestructura/OfficeRepositorySequelize");
 const SpecialtyRepositorySequelize = require("../../Specialties/Infraestructura/SpecialtyRepositorySequelize");
-const DoctorRepository = require("../../Doctors/Infraestructura/DoctorRepositorySequelize");
+const DoctorRepositorySequelize = require("../../Doctors/Infraestructura/DoctorRepositorySequelize");
+const PatientRepositorySequelize = require("../../Patients/Infraestructura/PatientRepositorySequelize")
 
 const CrearBranch = require("../../Branches/Aplicacion/CrearBranch");
 const ListarBranch = require("../../Branches/Aplicacion/ListarBranch");
@@ -30,6 +31,12 @@ const ObtenerDoctor = require("../../Doctors/Aplicacion/ObtenerDoctorPorId");
 const ActualizarDoctor = require("../../Doctors/Aplicacion/ActualizarDoctor");
 const EliminarDoctor = require("../../Doctors/Aplicacion/EliminarDoctor");
 
+const CrearPaciente = require("../../Patients/Aplicacion/CrearPatient");
+const ListarPaciente = require("../../Patients/Aplicacion/ListarPatient");
+const ObtenerPaciente = require("../../Patients/Aplicacion/ObtenerPatientPorId");
+const ActualizarPaciente = require("../../Patients/Aplicacion/ActualizarPatient");
+const EliminarPaciente = require("../../Patients/Aplicacion/EliminarPatient");
+
 const BranchController = require("../../Branches/Infraestructura/http/BranchController");
 const BranchRoutes = require("../../Branches/Infraestructura/http/BranchRoutes");
 const OfficeController = require("../../Offices/Infraestructura/http/OfficeController");
@@ -38,13 +45,16 @@ const SpecialtyController = require("../../Specialties/Infraestructura/http/Spec
 const SpecialtyRoutes = require("../../Specialties/Infraestructura/http/SpecialtyRoutes");
 const DoctorController = require("../../Doctors/Infraestructura/http/DoctorController");
 const DoctorRoutes = require("../../Doctors/Infraestructura/http/DoctorRoutes");
+const PatientController = require("../../Patients/Infraestructura/http/PatientController");
+const PatientRoutes = require("../../Patients/Infraestructura/http/PatientRoutes");
 
 module.exports = function registerClinicModule(app) {
 
   const branchRepository = new BranchRepositorySequelize();
   const officeRepository = new OfficeRepositorySequelize();
   const specialtyRepository = new SpecialtyRepositorySequelize();
-  const doctorRepository = new DoctorRepository();
+  const doctorRepository = new DoctorRepositorySequelize();
+  const pacienteRepository = new PatientRepositorySequelize();
 
   const branchController = new BranchController({
     crear: new CrearBranch(branchRepository),
@@ -78,8 +88,17 @@ const doctorController = new DoctorController({
   eliminar: new EliminarDoctor(doctorRepository)
 });
 
+const patientController = new PatientController({
+  crear: new CrearPaciente(pacienteRepository),
+  listar: new ListarPaciente(pacienteRepository),
+  obtener: new ObtenerPaciente(pacienteRepository),
+  actualizar: new ActualizarPaciente(pacienteRepository),
+  eliminar: new EliminarPaciente(pacienteRepository)
+})
+
   app.use("/api/clinic/branches", BranchRoutes(branchController));
   app.use("/api/clinic/offices", OfficeRoutes(officeController));
   app.use("/api/clinic/specialties", SpecialtyRoutes(specialtyController));
   app.use("/api/clinic/doctors", DoctorRoutes(doctorController));
+  app.use("/api/clinic/patients", PatientRoutes(patientController));
 };

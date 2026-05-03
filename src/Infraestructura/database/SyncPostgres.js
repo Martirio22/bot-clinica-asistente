@@ -13,6 +13,8 @@ require("../../lib/Clinic/Branches/Infraestructura/BranchModel");
 require("../../lib/Clinic/Offices/Infraestructura/OfficeModel");
 require("../../lib/Clinic/Specialties/Infraestructura/SpecialtyModel");
 require("../../lib/Clinic/Doctors/Infraestructura/DoctorModel");
+require("../../lib/Clinic/Patients/Infraestructura/PatientModel");
+
 async function syncPostgres() {
   setupSecurityAssociations();
   setupClinicAssociations();
