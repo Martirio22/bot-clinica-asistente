@@ -1,5 +1,5 @@
 const Paciente = require("../Dominio/Entidades/Patient");
-
+const ConflictError = require("../../../../shared/errors/ConflictError");
 class CrearPaciente {
   constructor(pacienteRepository) {
     this.pacienteRepository = pacienteRepository;

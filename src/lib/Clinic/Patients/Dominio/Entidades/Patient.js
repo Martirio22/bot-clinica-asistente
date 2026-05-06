@@ -12,8 +12,9 @@ class Patient {
     address = null,
     isActive = true
   }) {
-    if (!firstName) throw new Error("firstName required");
-    if (!lastName) throw new Error("lastName required");
+    if (!firstName) throw new Error("Nombre requerido");
+    if (!lastName) throw new Error("Apellido requerido");
+    if (!identification) throw new Error("Identificacion requerida");
     if (!whatsappPhone) throw new Error("whatsappPhone required");
 
     this.id = id;

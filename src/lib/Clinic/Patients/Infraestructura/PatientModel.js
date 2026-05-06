@@ -65,6 +65,7 @@ PatientModel.init(
 
     isActive: {
       type: DataTypes.BOOLEAN,
+      allowNull: false,
       defaultValue: true,
       field: "is_active"
     }
@@ -72,8 +73,7 @@ PatientModel.init(
   {
     sequelize,
     schema: "clinic",
-    tableName: "patients",
-    timestamps: true
+    tableName: "patients"
   }
 );
 

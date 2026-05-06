@@ -1,11 +1,13 @@
 const PasswordHasher = require("../../../../shared/security/PasswordHasher");
 const TokenService = require("../../../../shared/security/TokenService");
 
+const UserRepositorySequelize = require("../../../Security/Users/Infraestructura/UserRepositorySequelize");
 const BranchRepositorySequelize = require("../../Branches/Infraestructura/BranchRepositorySequelize");
 const OfficeRepositorySequelize = require("../../Offices/Infraestructura/OfficeRepositorySequelize");
 const SpecialtyRepositorySequelize = require("../../Specialties/Infraestructura/SpecialtyRepositorySequelize");
 const DoctorRepositorySequelize = require("../../Doctors/Infraestructura/DoctorRepositorySequelize");
 const PatientRepositorySequelize = require("../../Patients/Infraestructura/PatientRepositorySequelize")
+const CARepositorySequelize = require("../../ClinicalAssistants/Infraestructura/CARepositorySequelize");
 
 const CrearBranch = require("../../Branches/Aplicacion/CrearBranch");
 const ListarBranch = require("../../Branches/Aplicacion/ListarBranch");
@@ -37,6 +39,12 @@ const ObtenerPaciente = require("../../Patients/Aplicacion/ObtenerPatientPorId")
 const ActualizarPaciente = require("../../Patients/Aplicacion/ActualizarPatient");
 const EliminarPaciente = require("../../Patients/Aplicacion/EliminarPatient");
 
+const CreateClinicalAssistant = require("../../ClinicalAssistants/Aplicacion/CrearClinicalAssistant");
+const ListarClinicalAssistant = require("../../ClinicalAssistants/Aplicacion/ListarClinicalAssistant");
+const ObtenerClinicalAssistantPorId = require("../../ClinicalAssistants/Aplicacion/ObtenerClinicalAssistantPorId");
+const ActualizarClinicalAssistant = require("../../ClinicalAssistants/Aplicacion/ActualizarClinicalAssistant");
+const EliminarClinicalAssistant = require("../../ClinicalAssistants/Aplicacion/EliminarClinicalAssistant");
+
 const BranchController = require("../../Branches/Infraestructura/http/BranchController");
 const BranchRoutes = require("../../Branches/Infraestructura/http/BranchRoutes");
 const OfficeController = require("../../Offices/Infraestructura/http/OfficeController");
@@ -47,14 +55,20 @@ const DoctorController = require("../../Doctors/Infraestructura/http/DoctorContr
 const DoctorRoutes = require("../../Doctors/Infraestructura/http/DoctorRoutes");
 const PatientController = require("../../Patients/Infraestructura/http/PatientController");
 const PatientRoutes = require("../../Patients/Infraestructura/http/PatientRoutes");
+const ClinicalAssistantController = require("../../ClinicalAssistants/Infraestructura/http/ClinicalAssistantController");
+const ClinicalAssistantRoutes = require("../../ClinicalAssistants/Infraestructura/http/ClinicalAssistantRoutes");
+const CrearClinicalAssistant = require("../../ClinicalAssistants/Aplicacion/CrearClinicalAssistant");
+const e = require("express");
 
 module.exports = function registerClinicModule(app) {
 
+  const userRepository = new UserRepositorySequelize();
   const branchRepository = new BranchRepositorySequelize();
   const officeRepository = new OfficeRepositorySequelize();
   const specialtyRepository = new SpecialtyRepositorySequelize();
   const doctorRepository = new DoctorRepositorySequelize();
   const pacienteRepository = new PatientRepositorySequelize();
+  const assistantRepository = new CARepositorySequelize();
 
   const branchController = new BranchController({
     crear: new CrearBranch(branchRepository),
@@ -96,9 +110,22 @@ const patientController = new PatientController({
   eliminar: new EliminarPaciente(pacienteRepository)
 })
 
+const assistantController = new ClinicalAssistantController({
+  crear: new CrearClinicalAssistant(
+    assistantRepository,
+    userRepository,
+    doctorRepository
+  ),
+  listar: new ListarClinicalAssistant(assistantRepository),
+  obtener: new ObtenerClinicalAssistantPorId(assistantRepository),
+  actualizar: new ActualizarClinicalAssistant(assistantRepository),
+  eliminar: new EliminarClinicalAssistant(assistantRepository)
+});
+
   app.use("/api/clinic/branches", BranchRoutes(branchController));
   app.use("/api/clinic/offices", OfficeRoutes(officeController));
   app.use("/api/clinic/specialties", SpecialtyRoutes(specialtyController));
   app.use("/api/clinic/doctors", DoctorRoutes(doctorController));
   app.use("/api/clinic/patients", PatientRoutes(patientController));
+  app.use("/api/clinic/clinical-assistants", ClinicalAssistantRoutes(assistantController));
 };

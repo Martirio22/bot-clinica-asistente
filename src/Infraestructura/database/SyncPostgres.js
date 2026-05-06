@@ -14,12 +14,16 @@ require("../../lib/Clinic/Offices/Infraestructura/OfficeModel");
 require("../../lib/Clinic/Specialties/Infraestructura/SpecialtyModel");
 require("../../lib/Clinic/Doctors/Infraestructura/DoctorModel");
 require("../../lib/Clinic/Patients/Infraestructura/PatientModel");
+require("../../lib/Clinic/ClinicalAssistants/Infraestructura/ClinicalAssistantModel");
+
+require("../../lib/Scheduling/AppointmentStatus/Infraestructura/AppointmentStatusModel");
 
 async function syncPostgres() {
   setupSecurityAssociations();
   setupClinicAssociations();
   await sequelize.createSchema("security").catch(() => {});
   await sequelize.createSchema("clinic").catch(() => {});
+  await sequelize.createSchema("scheduling").catch(() => {});
   await sequelize.sync({
     alter: process.env.DB_SYNC_ALTER === "true",
     force: process.env.DB_SYNC_FORCE === "true"

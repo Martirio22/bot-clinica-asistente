@@ -56,6 +56,13 @@ class DoctorRepositorySequelize {
 
     return doctors.map(d => this.toDomain(d));
   }
+  async findByUserId(userId) {
+  const data = await DoctorModel.findOne({
+    where: { userId }
+  });
+
+  return data ? this.toDomain(data) : null;
+}
 
   async update(id, data) {
     await DoctorModel.update(data, { where: { id } });

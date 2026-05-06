@@ -2,7 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const registerSecurityModule = require("./lib/Security/Infraestructura/http");
 const registerChatBotModule = require("./lib/ChatBot/Infraestructura/http");
-const registerClinicModule = require("./lib/Clinic/Infraestructura/http")
+const registerClinicModule = require("./lib/Clinic/Infraestructura/http");
+const registerSchedulingModule = require("./lib/Scheduling/Infraestructura/http");
 const errorHandler = require("./shared/middlewares/errorHandler");
 
 function buildApp() {
@@ -19,7 +20,8 @@ function buildApp() {
   // Módulos reales del sistema según el modelo enviado.
   registerSecurityModule(app);   // users, roles, user_roles, auth, refresh_tokens
   registerChatBotModule(app);    // chat_messages, webhooks, logs de entrega
-  registerClinicModule(app);     // branches, doctors, offices, patients, specialties
+  registerClinicModule(app);     // branches, doctors, offices, patients, specialties, assistants
+  registerSchedulingModule(app); // appointments, schedule, authorizations, status
 
   app.use((req, res) =>
     res.status(404).json({ success: false, message: "Ruta no encontrada" })

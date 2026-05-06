@@ -3,6 +3,7 @@ const OfficeModel = require("../Offices/Infraestructura/OfficeModel");
 const DoctorModel = require("../Doctors/Infraestructura/DoctorModel");
 const SecurityUserModel = require("../../Security/Users/Infraestructura/UserModel");
 const SpecialtyModel = require("../Specialties/Infraestructura/SpecialtyModel");
+const ClinicalAssistantModel = require("../ClinicalAssistants/Infraestructura/ClinicalAssistantModel");
 
 function setupClinicAssociations() {
   BranchModel.hasMany(OfficeModel, {
@@ -26,6 +27,11 @@ function setupClinicAssociations() {
     foreignKey: "specialtyId",
     as: "specialty"
   });
+
+  ClinicalAssistantModel.belongsTo(SecurityUserModel, {
+  foreignKey: "userId",
+  as: "user"
+});
 }
 
 module.exports = setupClinicAssociations;
