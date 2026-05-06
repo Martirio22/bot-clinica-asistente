@@ -4,6 +4,7 @@ const setupClinicAssociations = require("../../lib/Clinic/Infraestructura/associ
 const seedSecurity = require("../../lib/Security/Infraestructura/securitySeeder");
 const seedScheduling = require("../../lib/Scheduling/Infraestructura/schedulingSeeder");
 const seedClinic = require("../../lib/Clinic/Infraestructura/clinicSeeder");
+const seedMedicalCare = require("../../lib/MedicalCare/Infraestructura/medicalCareSeeder");
 
 // Importar modelos para que Sequelize los registre
 require("../../lib/Security/Users/Infraestructura/UserModel");
@@ -21,12 +22,15 @@ require("../../lib/Clinic/ClinicalAssistants/Infraestructura/ClinicalAssistantMo
 require("../../lib/Scheduling/AppointmentStatus/Infraestructura/AppointmentStatusModel");
 require("../../lib/Scheduling/ScheduleBlockType/Infraestructura/ScheduleBlockTypeModel");
 
+require("../../lib/MedicalCare/AttentionStatus/Infraestructura/AttentionStatusModel");
+
 async function syncPostgres() {
   setupSecurityAssociations();
   setupClinicAssociations();
   await sequelize.createSchema("security").catch(() => {});
   await sequelize.createSchema("clinic").catch(() => {});
   await sequelize.createSchema("scheduling").catch(() => {});
+  await sequelize.createSchema("medicalcare").catch(() => {});
   await sequelize.sync({
     alter: process.env.DB_SYNC_ALTER === "true",
     force: process.env.DB_SYNC_FORCE === "true"
@@ -35,10 +39,6 @@ async function syncPostgres() {
   if (process.env.SEED_SECURITY === "true") await seedSecurity();
   if (process.env.SEED_SCHEDULING === "true") await seedScheduling();
   if (process.env.SEED_CLINIC === "true") await seedClinic();
-
-//if (process.env.RUN_SEEDS === "true") {
-  //await seedSecurity();
-  //await seedScheduling();
-//}
+  if (process.env.SEED_MEDICALCARE === "true") await seedMedicalCare();
 }
 module.exports = syncPostgres;

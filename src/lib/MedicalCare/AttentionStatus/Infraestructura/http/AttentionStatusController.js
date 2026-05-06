@@ -1,4 +1,4 @@
-class ScheduleBlockTypeController {
+class AttentionStatusController {
   constructor({ crear, listar, obtener, actualizar, eliminar }) {
     this.crearUseCase = crear;
     this.listarUseCase = listar;
@@ -29,8 +29,8 @@ class ScheduleBlockTypeController {
 
   eliminar = async (req, res) => {
     await this.eliminarUseCase.ejecutar(req.params.id);
-    res.json({ success: true, message: "Tipo de bloqueo desactivado" });
+    res.json({ success: true, message: "Estado de atención desactivado" });
   };
 }
 
-module.exports = ScheduleBlockTypeController;
+module.exports = AttentionStatusController;
