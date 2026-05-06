@@ -2,6 +2,8 @@ const { sequelize } = require("./Postgres");
 const setupSecurityAssociations = require("../../lib/Security/Infraestructura/associations");
 const setupClinicAssociations = require("../../lib/Clinic/Infraestructura/associations");
 const seedSecurity = require("../../lib/Security/Infraestructura/securitySeeder");
+const seedScheduling = require("../../lib/Scheduling/Infraestructura/schedulingSeeder");
+const seedClinic = require("../../lib/Clinic/Infraestructura/clinicSeeder");
 
 // Importar modelos para que Sequelize los registre
 require("../../lib/Security/Users/Infraestructura/UserModel");
@@ -17,6 +19,7 @@ require("../../lib/Clinic/Patients/Infraestructura/PatientModel");
 require("../../lib/Clinic/ClinicalAssistants/Infraestructura/ClinicalAssistantModel");
 
 require("../../lib/Scheduling/AppointmentStatus/Infraestructura/AppointmentStatusModel");
+require("../../lib/Scheduling/ScheduleBlockType/Infraestructura/ScheduleBlockTypeModel");
 
 async function syncPostgres() {
   setupSecurityAssociations();
@@ -30,5 +33,12 @@ async function syncPostgres() {
   });
   console.log("Modelos PostgreSQL sincronizados correctamente");
   if (process.env.SEED_SECURITY === "true") await seedSecurity();
+  if (process.env.SEED_SCHEDULING === "true") await seedScheduling();
+  if (process.env.SEED_CLINIC === "true") await seedClinic();
+
+//if (process.env.RUN_SEEDS === "true") {
+  //await seedSecurity();
+  //await seedScheduling();
+//}
 }
 module.exports = syncPostgres;

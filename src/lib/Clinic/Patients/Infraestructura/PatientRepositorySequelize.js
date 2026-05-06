@@ -70,6 +70,13 @@ class PatientRepositorySequelize {
     return patient ? this.toDomain(patient) : null;
   }
 
+  async findByPhone(whatsappPhone) {
+    const patient = await PatientModel.findOne({ 
+      where: { whatsappPhone } 
+    });
+    return patient ? this.toDomain(patient) : null;
+  }
+  
   async findByName(firstName) {
     const patient = await PatientModel.findOne({ where: { firstName } });
     return patient ? this.toDomain(patient) : null;
