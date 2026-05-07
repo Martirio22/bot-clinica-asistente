@@ -1,23 +1,25 @@
 const Paciente = require("../Dominio/Entidades/Patient");
 const ConflictError = require("../../../../shared/errors/ConflictError");
+
 class CrearPaciente {
   constructor(pacienteRepository) {
     this.pacienteRepository = pacienteRepository;
   }
 
   async ejecutar(data) {
-    if (await this.pacienteRepository.findByEmail(data.email)) throw new ConflictError("Ya existe un paciente con ese email");
-    if (await this.pacienteRepository.findByName(data.firstName)) throw new ConflictError("Ya existe el paciente");
-    if (await this.pacienteRepository.findByIdentification(data.identification)) throw new ConflictError("Ya existe un paciente con esa identificacion");
-    if (await this.pacienteRepository.findByPhone(data.whatsappPhone)) throw new ConflictError("Ya existe un paciente con ese numero telefonico");
+  const nuevoPaciente = new Paciente({ ...data, isActive: true });
 
-    return await this.pacienteRepository.create(
-      new Paciente({
-        ...data,
-        isActive: true
-      })
-    );
-  }
+  if (await this.pacienteRepository.findByEmail(nuevoPaciente.email)) 
+    throw new ConflictError("Ya existe un paciente con ese email");
+  
+  if (await this.pacienteRepository.findByIdentification(nuevoPaciente.identification)) 
+    throw new ConflictError("Ya existe un paciente con esa identificación");
+  
+  if (await this.pacienteRepository.findByPhone(nuevoPaciente.whatsappPhone)) 
+    throw new ConflictError("Ya existe un paciente con ese número telefónico");
+    
+  return await this.pacienteRepository.create(nuevoPaciente);
+}
 }
 
 module.exports = CrearPaciente;

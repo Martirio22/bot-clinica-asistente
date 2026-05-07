@@ -6,17 +6,17 @@ class CrearScheduleBlockType {
     this.repository = repository;
   }
 
-  async ejecutar(data) {
-    if (await this.repository.findByCode(data.code)) {
+async ejecutar(data) {
+    const nuevoTipoBloqueo = new ScheduleBlockType({
+      ...data,
+      isActive: true
+    });
+
+    if (await this.repository.findByCode(nuevoTipoBloqueo.code)) {
       throw new ConflictError("El código de tipo de bloqueo ya existe");
     }
 
-    return await this.repository.create(
-      new ScheduleBlockType({
-        ...data,
-        isActive: true
-      })
-    );
+    return await this.repository.create(nuevoTipoBloqueo);
   }
 }
 

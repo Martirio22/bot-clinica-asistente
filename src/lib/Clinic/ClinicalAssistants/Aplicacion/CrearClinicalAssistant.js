@@ -1,6 +1,7 @@
 const ClinicalAssistant = require("../Dominio/Entidades/ClinicalAssistant");
 const ConflictError = require("../../../../shared/errors/ConflictError");
 const NotFoundError = require("../../../../shared/errors/NotFoundError");
+
 class CrearClinicalAssistant {
   constructor(caRepository, userRepository, doctorRepository) {
     this.caRepository = caRepository;
@@ -8,30 +9,24 @@ class CrearClinicalAssistant {
     this.doctorRepository = doctorRepository;
   }
 
-  async ejecutar(data) {
+async ejecutar(data) {
+  const nuevoAsistente = new ClinicalAssistant({ ...data, isActive: true });
 
-    const user = await this.userRepository.findById(data.userId);
-    if (!user) {
-      throw new NotFoundError("El usuario no existe");
-    }
+  const user = await this.userRepository.findById(nuevoAsistente.userId);
+  if (!user) throw new NotFoundError("El usuario no existe");
+  if (!user.isActive) throw new ConflictError("El usuario seleccionado está inactivo");
 
-    const existingAssistant = await this.caRepository.findByUserId(data.userId);
-    if (existingAssistant) {
-      throw new ConflictError("El usuario ya es asistente clínico");
-    }
-
-    const existingDoctor = await this.doctorRepository.findByUserId(data.userId);
-    if (existingDoctor) {
-      throw new ConflictError("El usuario ya es médico y no puede ser asistente");
-    }
-
-    return await this.caRepository.create(
-      new ClinicalAssistant({
-        ...data,
-        isActive: true
-      })
-    );
+  const tieneRolAsistente = user.roles && user.roles.some(role => role.code === "ASISTENTE");
+  if (!tieneRolAsistente) {
+    throw new ConflictError("El usuario seleccionado no tiene el rol de ASISTENTE asignado");
   }
+
+  if (await this.caRepository.findByUserId(nuevoAsistente.userId)) {
+    throw new ConflictError("El usuario ya es asistente clínico");
+  }
+
+  return await this.caRepository.create(nuevoAsistente);
+}
 }
 
 module.exports = CrearClinicalAssistant;

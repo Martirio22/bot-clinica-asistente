@@ -49,7 +49,7 @@ class SBTRepositorySequelize {
   }
 
   async findByCode(code) {
-    const sbt = await ScheduleBlockTypeModel.findOne({ where: { code } });
+    const sbt = await ScheduleBlockTypeModel.findOne({ where: { code: code.toUpperCase() } });
     return sbt ? this.toDomain(sbt) : null;
   }
 }

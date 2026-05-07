@@ -6,17 +6,17 @@ class CrearAttentionStatus {
     this.asRepository = asRepository;
   }
 
-  async ejecutar(data) {
-    if (await this.asRepository.findByCode(data.code)) {
+ async ejecutar(data) {
+    const nuevoStatus = new AttentionStatus({
+      ...data,
+      isActive: true
+    });
+
+    if (await this.asRepository.findByCode(nuevoStatus.code)) {
       throw new ConflictError("El código del estado de atención ya existe");
     }
 
-    return await this.asRepository.create(
-      new AttentionStatus({
-        ...data,
-        isActive: true
-      })
-    );
+    return await this.asRepository.create(nuevoStatus);
   }
 }
 

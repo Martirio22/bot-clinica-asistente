@@ -10,7 +10,7 @@ class ScheduleBlockType {
     if (!name) throw new Error("El nombre es requerido");
 
     this.id = id;
-    this.code = code.trim();
+    this.code = code.trim().toUpperCase();
     this.name = name.trim();
     this.description = description;
     this.isActive = isActive;

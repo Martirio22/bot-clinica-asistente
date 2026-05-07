@@ -7,16 +7,14 @@ class CrearAppointmentStatus {
   }
 
   async ejecutar(data) {
-    if (await this.apRepository.findByCode(data.code)) {
+    const status = new AppointmentStatus(data);
+
+    // Luego verificamos duplicados en la DB usando el código ya limpio de la entidad
+    if (await this.apRepository.findByCode(status.code)) {
       throw new ConflictError("El código de estado ya existe");
     }
 
-    return await this.apRepository.create(
-      new AppointmentStatus({
-        ...data,
-        isActive: true
-      })
-    );
+    return await this.apRepository.create(status);
   }
 }
 

@@ -1,3 +1,4 @@
+const ClinicalAssistant = require("../Dominio/Entidades/ClinicalAssistant");
 const ClinicalAssistantModel = require("./ClinicalAssistantModel");
 const SecurityUserModel = require("../../../Security/Users/Infraestructura/UserModel");
 
@@ -6,7 +7,7 @@ class CARepositorySequelize {
   toDomain(model) {
     const plain = model.toJSON ? model.toJSON() : model;
 
-    return {
+    return new ClinicalAssistant({
       id: plain.id,
       userId: plain.userId,
       canManageChat: plain.canManageChat,
@@ -14,7 +15,7 @@ class CARepositorySequelize {
       canAuthorizeCare: plain.canAuthorizeCare,
       isActive: plain.isActive,
       user: plain.user || null
-    };
+    });
   }
 
   async create(assistant) {
@@ -30,6 +31,7 @@ class CARepositorySequelize {
   }
 
   async findById(id) {
+    //if (!id) return null;
     const assistant = await ClinicalAssistantModel.findByPk(id, {
       include: [{ model: SecurityUserModel, as: "user" }]
     });

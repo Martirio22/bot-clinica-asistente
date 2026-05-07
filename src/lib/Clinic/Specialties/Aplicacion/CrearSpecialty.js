@@ -7,15 +7,14 @@ class CrearSpecialty {
   }
 
   async ejecutar(data) {
-    if (await this.repository.findByCode(data.code)) throw new ConflictError("Ya existe una especialidad con ese codigo");
-    if (await this.repository.findByName(data.name)) throw new ConflictError("Ya existe una especialidad");
-    return await this.repository.create(
-      new Specialty({
-        ...data,
-        isActive: true
-      })
-    );
+  const nuevaSpecialty = new Specialty({ ...data, isActive: true });
+
+  if (await this.repository.findByCode(nuevaSpecialty.code)) {
+    throw new ConflictError("Ya existe una especialidad con ese codigo");
   }
+
+  return await this.repository.create(nuevaSpecialty);
+}
 }
 
 module.exports = CrearSpecialty;

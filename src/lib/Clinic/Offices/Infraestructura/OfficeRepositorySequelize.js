@@ -61,8 +61,9 @@ class OfficeRepositorySequelize {
   }
 
   async findByCodeAndBranch(code, branchId) {
+
     const office = await OfficeModel.findOne({
-      where: { code, branchId },
+      where: { code: code.toUpperCase(), branchId },
       include: [
         { model: BranchModel, as: "branch" }
       ]

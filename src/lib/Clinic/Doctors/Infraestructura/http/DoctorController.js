@@ -8,8 +8,15 @@ class DoctorController {
   }
 
   crear = async (req, res) => {
-    const data = await this.crearUseCase.ejecutar(req.body);
-    res.status(201).json({ success: true, data });
+    try {
+      const resultado = await this.crearUseCase.ejecutar(req.body);
+      res.status(201).json({ success: true, data: resultado });
+    } catch (error) {
+      res.status(error.status || 400).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
   };
 
   listar = async (req, res) => {

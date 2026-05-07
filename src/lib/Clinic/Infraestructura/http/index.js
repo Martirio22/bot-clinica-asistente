@@ -39,7 +39,7 @@ const ObtenerPaciente = require("../../Patients/Aplicacion/ObtenerPatientPorId")
 const ActualizarPaciente = require("../../Patients/Aplicacion/ActualizarPatient");
 const EliminarPaciente = require("../../Patients/Aplicacion/EliminarPatient");
 
-const CreateClinicalAssistant = require("../../ClinicalAssistants/Aplicacion/CrearClinicalAssistant");
+const CrearClinicalAssistant = require("../../ClinicalAssistants/Aplicacion/CrearClinicalAssistant");
 const ListarClinicalAssistant = require("../../ClinicalAssistants/Aplicacion/ListarClinicalAssistant");
 const ObtenerClinicalAssistantPorId = require("../../ClinicalAssistants/Aplicacion/ObtenerClinicalAssistantPorId");
 const ActualizarClinicalAssistant = require("../../ClinicalAssistants/Aplicacion/ActualizarClinicalAssistant");
@@ -57,7 +57,6 @@ const PatientController = require("../../Patients/Infraestructura/http/PatientCo
 const PatientRoutes = require("../../Patients/Infraestructura/http/PatientRoutes");
 const ClinicalAssistantController = require("../../ClinicalAssistants/Infraestructura/http/ClinicalAssistantController");
 const ClinicalAssistantRoutes = require("../../ClinicalAssistants/Infraestructura/http/ClinicalAssistantRoutes");
-const CrearClinicalAssistant = require("../../ClinicalAssistants/Aplicacion/CrearClinicalAssistant");
 const e = require("express");
 
 module.exports = function registerClinicModule(app) {
@@ -79,7 +78,7 @@ module.exports = function registerClinicModule(app) {
   });
 
   const officeController = new OfficeController({
-  crear: new CrearOffice(officeRepository),
+  crear: new CrearOffice(officeRepository, branchRepository),
   listar: new ListarOffice(officeRepository),
   obtener: new ObtenerOfficePorId(officeRepository),
   actualizar: new ActualizarOffice(officeRepository),
@@ -95,10 +94,10 @@ const specialtyController = new SpecialtyController({
 });
 
 const doctorController = new DoctorController({
-  crear: new CrearDoctor(doctorRepository),
+  crear: new CrearDoctor(doctorRepository, userRepository, specialtyRepository),
   listar: new ListarDoctor(doctorRepository),
   obtener: new ObtenerDoctor(doctorRepository),
-  actualizar: new ActualizarDoctor(doctorRepository),
+  actualizar: new ActualizarDoctor(doctorRepository, userRepository, specialtyRepository),
   eliminar: new EliminarDoctor(doctorRepository)
 });
 

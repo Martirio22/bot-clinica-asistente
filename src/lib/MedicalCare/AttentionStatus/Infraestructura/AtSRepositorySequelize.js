@@ -52,7 +52,7 @@ class AtSRepositorySequelize {
   }
 
   async findByCode(code) {
-    const ats = await AttentionStatusModel.findOne({ where: { code } });
+    const ats = await AttentionStatusModel.findOne({ where: { code: code.toUpperCase() } });
     return ats ? this.toDomain(ats) : null;
   }
 }

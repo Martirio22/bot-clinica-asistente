@@ -7,13 +7,13 @@ class Office {
     floor = null,
     isActive = true
   }){
-    if (!branchId) throw new Error("branchId requerido");
-    if (!code) throw new Error("code requerido");
-    if (!name) throw new Error("name requerido");
+    if (!branchId) throw new Error("id de sucursal requerido");
+    if (!code) throw new Error("codido de consultorio requerido");
+    if (!name) throw new Error("nombre requerido");
 
     this.id = id;
     this.branchId = branchId;
-    this.code = code.trim();
+    this.code = code.trim().toUpperCase();
     this.name = name.trim();
     this.floor = floor;
     this.isActive = isActive;

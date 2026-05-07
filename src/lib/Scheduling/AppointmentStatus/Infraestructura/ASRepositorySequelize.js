@@ -49,8 +49,10 @@ class ASRepositorySequelize {
   }
 
   async findByCode(code) {
-    const as = await AppointmentStatusModel.findOne({ where: { code } });
-    return as ? this.toDomain(as) : null;
+    const r = await AppointmentStatusModel.findOne({ 
+      where: { code: code.toUpperCase() } 
+    });
+    return r ? this.toDomain(r) : null;
   }
 }
 

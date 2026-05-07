@@ -47,22 +47,12 @@ class SpecialtyRepositorySequelize {
 
     return data.map(d => this.toDomain(d));
   }
+async findByCode(code) {
+  const data = await SpecialtyModel.findOne({ where: { code: code.toUpperCase()}
+ });
+  return data ? this.toDomain(data) : null;
+}
 
-  async findByCode(code) {
-    const data = await SpecialtyModel.findOne({
-      where: { code }
-    });
-
-    return data ? this.toDomain(data) : null;
-  }
-
-  async findByName(name) {
-    const data = await SpecialtyModel.findOne({
-      where: { name }
-    });
-
-    return data ? this.toDomain(data) : null;
-  }
 }
 
 module.exports = SpecialtyRepositorySequelize;

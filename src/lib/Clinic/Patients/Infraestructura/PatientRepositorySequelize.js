@@ -39,6 +39,7 @@ class PatientRepositorySequelize {
   }
 
   async findById(id) {
+    if (!id) return null;
     const patient = await PatientModel.findByPk(id);
     return patient ? this.toDomain(patient) : null;
   }
@@ -77,10 +78,6 @@ class PatientRepositorySequelize {
     return patient ? this.toDomain(patient) : null;
   }
   
-  async findByName(firstName) {
-    const patient = await PatientModel.findOne({ where: { firstName } });
-    return patient ? this.toDomain(patient) : null;
-  }
 }
 
 module.exports = PatientRepositorySequelize;

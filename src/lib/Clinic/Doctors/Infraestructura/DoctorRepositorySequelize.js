@@ -1,3 +1,4 @@
+const Doctor = require("../Dominio/Entidades/Doctor");
 const DoctorModel = require("./DoctorModel");
 const SecurityUserModel = require("../../../Security/Users/Infraestructura/UserModel");
 const SpecialtyModel = require("../../Specialties/Infraestructura/SpecialtyModel");
@@ -7,18 +8,18 @@ class DoctorRepositorySequelize {
   toDomain(model) {
     const plain = model.toJSON ? model.toJSON() : model;
 
-    return {
-      id: plain.id,
-      userId: plain.userId,
-      specialtyId: plain.specialtyId,
-      professionalRegistry: plain.professionalRegistry,
-      appointmentDurationMinutes: plain.appointmentDurationMinutes,
-      attendsWhatsApp: plain.attendsWhatsApp,
-      isActive: plain.isActive,
+    return new Doctor({
+    id: plain.id,
+    userId: plain.userId,
+    specialtyId: plain.specialtyId,
+    professionalRegistry: plain.professionalRegistry,
+    appointmentDurationMinutes: plain.appointmentDurationMinutes,
+    attendsWhatsApp: plain.attendsWhatsApp,
+    isActive: plain.isActive,
 
-      user: plain.user || null,
-      specialty: plain.specialty || null
-    };
+    user: plain.user || null,
+    specialty: plain.specialty || null
+  });
   }
 
   async create(doctor) {
@@ -57,14 +58,16 @@ class DoctorRepositorySequelize {
     return doctors.map(d => this.toDomain(d));
   }
   async findByUserId(userId) {
-  const data = await DoctorModel.findOne({
-    where: { userId }
-  });
 
-  return data ? this.toDomain(data) : null;
-}
+    const data = await DoctorModel.findOne({
+      where: { userId }
+    });
+
+    return data ? this.toDomain(data) : null;
+  }
 
   async update(id, data) {
+    if (!id) return null;
     await DoctorModel.update(data, { where: { id } });
     return await this.findById(id);
   }
