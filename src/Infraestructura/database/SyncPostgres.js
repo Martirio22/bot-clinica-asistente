@@ -1,6 +1,7 @@
 const { sequelize } = require("./Postgres");
 const setupSecurityAssociations = require("../../lib/Security/Infraestructura/associations");
 const setupClinicAssociations = require("../../lib/Clinic/Infraestructura/associations");
+const setupSchedulingAssociations = require("../../lib/Scheduling/Infraestructura/associations");
 const seedSecurity = require("../../lib/Security/Infraestructura/securitySeeder");
 const seedScheduling = require("../../lib/Scheduling/Infraestructura/schedulingSeeder");
 const seedClinic = require("../../lib/Clinic/Infraestructura/clinicSeeder");
@@ -21,12 +22,14 @@ require("../../lib/Clinic/ClinicalAssistants/Infraestructura/ClinicalAssistantMo
 
 require("../../lib/Scheduling/AppointmentStatus/Infraestructura/AppointmentStatusModel");
 require("../../lib/Scheduling/ScheduleBlockType/Infraestructura/ScheduleBlockTypeModel");
+require("../../lib/Scheduling/DoctorSchedules/Infraestructura/DoctorScheduleModel");
 
 require("../../lib/MedicalCare/AttentionStatus/Infraestructura/AttentionStatusModel");
 
 async function syncPostgres() {
   setupSecurityAssociations();
   setupClinicAssociations();
+  setupSchedulingAssociations();
   await sequelize.createSchema("security").catch(() => {});
   await sequelize.createSchema("clinic").catch(() => {});
   await sequelize.createSchema("scheduling").catch(() => {});

@@ -4,31 +4,28 @@ class DoctorSchedule {
     doctorId,
     branchId,
     officeId = null,
-    weekDay,
+    dayOfWeek,
     startTime,
     endTime,
     isActive = true,
-
     doctor = null,
     branch = null,
     office = null
   }) {
-
-    if (!doctorId) throw new Error("Doctor requerido");
-    if (!branchId) throw new Error("Sucursal requerida");
-    if (!weekDay) throw new Error("Día requerido");
-    if (!startTime) throw new Error("Hora inicio requerida");
-    if (!endTime) throw new Error("Hora fin requerida");
+    if (!doctorId) throw new Error("médico requerido");
+    if (!branchId) throw new Error("sucursal requerida");
+    if (!dayOfWeek || dayOfWeek < 1 || dayOfWeek > 7) throw new Error("día de la semana inválido (1-7)");
+    if (!startTime) throw new Error("hora de inicio requerida");
+    if (!endTime) throw new Error("hora de fin requerida");
+    if (startTime >= endTime) throw new Error("la hora de inicio debe ser menor a la hora de fin");
 
     this.id = id;
     this.doctorId = doctorId;
     this.branchId = branchId;
     this.officeId = officeId;
-
-    this.weekDay = weekDay;
+    this.dayOfWeek = dayOfWeek;
     this.startTime = startTime;
     this.endTime = endTime;
-
     this.isActive = isActive;
 
     this.doctor = doctor;

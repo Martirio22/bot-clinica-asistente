@@ -67,7 +67,6 @@ class DoctorRepositorySequelize {
   }
 
   async update(id, data) {
-    if (!id) return null;
     await DoctorModel.update(data, { where: { id } });
     return await this.findById(id);
   }
