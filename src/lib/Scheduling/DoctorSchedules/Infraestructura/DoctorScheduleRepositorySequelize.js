@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const DoctorSchedule = require("../Dominio/Entidades/DoctorSchedule");
 const DoctorScheduleModel = require("./DoctorScheduleModel");
 const DoctorModel = require("../../../Clinic/Doctors/Infraestructura/DoctorModel");
@@ -62,7 +63,6 @@ class DoctorScheduleRepositorySequelize {
   }
 
   async findCollidingSchedule(doctorId, dayOfWeek, startTime, endTime) {
-  const { Op } = require("sequelize");
   
   return await DoctorScheduleModel.findOne({
     where: {

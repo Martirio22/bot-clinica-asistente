@@ -23,6 +23,7 @@ require("../../lib/Clinic/ClinicalAssistants/Infraestructura/ClinicalAssistantMo
 require("../../lib/Scheduling/AppointmentStatus/Infraestructura/AppointmentStatusModel");
 require("../../lib/Scheduling/ScheduleBlockType/Infraestructura/ScheduleBlockTypeModel");
 require("../../lib/Scheduling/DoctorSchedules/Infraestructura/DoctorScheduleModel");
+require("../../lib/Scheduling/DoctorScheduleBlocks/Infraestructura/ScheduleBlockModel");
 
 require("../../lib/MedicalCare/AttentionStatus/Infraestructura/AttentionStatusModel");
 
