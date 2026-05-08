@@ -1,6 +1,3 @@
-const PasswordHasher = require("../../../../shared/security/PasswordHasher");
-const TokenService = require("../../../../shared/security/TokenService");
-
 const UserRepositorySequelize = require("../../../Security/Users/Infraestructura/UserRepositorySequelize");
 const BranchRepositorySequelize = require("../../Branches/Infraestructura/BranchRepositorySequelize");
 const OfficeRepositorySequelize = require("../../Offices/Infraestructura/OfficeRepositorySequelize");

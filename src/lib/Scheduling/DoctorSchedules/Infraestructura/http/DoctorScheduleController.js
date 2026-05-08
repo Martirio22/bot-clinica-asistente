@@ -13,7 +13,6 @@ class DoctorScheduleController {
   };
 
   listar = async (req, res) => {
-    // Permitimos filtrar por ?doctorId=... en la URL
     const { doctorId } = req.query;
     const data = await this.listarUC.ejecutar(doctorId);
     res.json({ success: true, data });

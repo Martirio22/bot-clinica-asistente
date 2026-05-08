@@ -12,11 +12,9 @@ class ActualizarDoctorSchedule {
     const schedule = await this.scheduleRepo.findById(id);
     if (!schedule) throw new NotFoundError("Horario no encontrado");
 
-    // Convertimos a String para asegurar comparaciones limpias (evita problemas de objetos UUID)
     const currentBranchId = String(schedule.branchId);
     const currentOfficeId = schedule.officeId ? String(schedule.officeId) : null;
 
-    // 1. Validar Sucursal si es enviada y es distinta
     if (data.branchId && String(data.branchId) !== currentBranchId) {
       const branch = await this.branchRepo.findById(data.branchId);
       if (!branch || branch.isActive === false) {
@@ -24,13 +22,9 @@ class ActualizarDoctorSchedule {
       }
     }
 
-    // 2. Validar Consultorio si es enviado y es distinto
     if (data.officeId && String(data.officeId) !== currentOfficeId) {
       const office = await this.officeRepo.findById(data.officeId);
       
-      // DEBUG: Si sigue fallando, descomenta la línea de abajo y mira tu consola de Node
-      // console.log("Office Encontrada:", office);
-
       if (!office || office.isActive === false) {
         throw new ConflictError("Consultorio inválido o inactivo");
       }
@@ -41,7 +35,6 @@ class ActualizarDoctorSchedule {
       }
     }
 
-    // Retornamos el update sin el doctorId para protegerlo
     return await this.scheduleRepo.update(id, {
       branchId: data.branchId ?? schedule.branchId,
       officeId: data.officeId ?? schedule.officeId,

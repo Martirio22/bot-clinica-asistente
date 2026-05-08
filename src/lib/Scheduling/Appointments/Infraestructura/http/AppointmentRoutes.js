@@ -5,7 +5,6 @@ const authMiddleware = require("../../../../../shared/middlewares/authMiddleware
 module.exports = (controller) => {
   const router = express.Router();
 
-  // 1. Rutas de creación
   router.post("/", authMiddleware, asyncHandler((req, res) => controller.crear(req, res, { esBot: false })));
   router.post("/external/bot", asyncHandler((req, res) => controller.crear(req, res, { esBot: true })));
 

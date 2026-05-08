@@ -7,7 +7,6 @@ class ScheduleBlockController {
     this.eliminarUC = eliminar;
   }
 
-  // ScheduleBlockController.js
 crear = async (req, res) => {
   const data = await this.crearUC.ejecutar({
     ...req.body,

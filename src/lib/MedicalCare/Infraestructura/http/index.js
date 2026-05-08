@@ -1,6 +1,3 @@
-const PasswordHasher = require("../../../../shared/security/PasswordHasher");
-const TokenService = require("../../../../shared/security/TokenService");
-
 const AtSRepositorySequelize = require("../../AttentionStatus/Infraestructura/AtSRepositorySequelize");
 
 const CrearAttentionStatus = require("../../AttentionStatus/Aplicacion/CrearAttentionStatus");

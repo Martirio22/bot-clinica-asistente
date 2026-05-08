@@ -12,8 +12,6 @@ class ObtenerDisponibilidadMedico {
     
     const duracionCita = doctor.appointmentDurationMinutes;
 
-    // 1. IMPORTANTE: Forzamos la interpretación local de la fecha
-    // fecha viene como '2026-05-15'
     const diaSemana = new Date(`${fecha}T00:00:00`).getDay(); 
 
     const horariosBase = await this.scheduleRepo.findAllByDoctor(doctorId);
@@ -26,8 +24,6 @@ class ObtenerDisponibilidadMedico {
 
     let slotsDisponibles = [];
     
-    // 2. Creamos punteros de tiempo usando el offset local (-05:00)
-    // Esto asegura que coincida con lo que PostgreSQL guarda como -05
     let currentPointer = new Date(`${fecha}T${horarioHoy.startTime}-05:00`);
     const limitPointer = new Date(`${fecha}T${horarioHoy.endTime}-05:00`);
 
@@ -39,12 +35,11 @@ class ObtenerDisponibilidadMedico {
 
       if (!estaOcupado) {
         slotsDisponibles.push({
-          // Mostramos la hora en formato local para entenderlo en Postman
+
           inicio: slotInicio.toLocaleString('sv-SE', { timeZone: 'America/Guayaquil' }),
           fin: slotFin.toLocaleString('sv-SE', { timeZone: 'America/Guayaquil' })
         });
-      }
-      
+      }   
       currentPointer.setMinutes(currentPointer.getMinutes() + duracionCita);
     }
 
@@ -60,8 +55,6 @@ class ObtenerDisponibilidadMedico {
   _revisarColision(inicio, fin, citas, bloqueos) {
     const ini = inicio.getTime();
     const f = fin.getTime();
-
-    // Comparamos contra las fechas que vienen de la DB
     const choqueCita = citas.some(c => {
       const cIni = new Date(c.startDate).getTime();
       const cFin = new Date(c.endDate).getTime();
@@ -73,7 +66,6 @@ class ObtenerDisponibilidadMedico {
       const bFin = new Date(b.endDate).getTime();
       return (ini < bFin && f > bIni);
     });
-
     return choqueCita || choqueBloqueo;
   }
 }

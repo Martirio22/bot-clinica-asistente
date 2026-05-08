@@ -1,11 +1,8 @@
 const Patient = require("../Dominio/Entidades/Patient");
 const PatientModel = require("./PatientModel");
-
 class PatientRepositorySequelize {
-
   toDomain(model) {
     const plain = model.toJSON ? model.toJSON() : model;
-
     return new Patient({
       id: plain.id,
       identificationType: plain.identificationType,
@@ -20,7 +17,6 @@ class PatientRepositorySequelize {
       isActive: plain.isActive
     });
   }
-
   async create(patient) {
     const created = await PatientModel.create({
       identificationType: patient.identificationType,
@@ -34,10 +30,9 @@ class PatientRepositorySequelize {
       address: patient.address,
       isActive: patient.isActive
     });
-
     return this.toDomain(created);
   }
-
+  
   async findById(id) {
     if (!id) return null;
     const patient = await PatientModel.findByPk(id);
@@ -48,7 +43,6 @@ class PatientRepositorySequelize {
     const patients = await PatientModel.findAll({
       order: [["createdAt", "DESC"]]
     });
-
     return patients.map(p => this.toDomain(p));
   }
 
@@ -77,7 +71,6 @@ class PatientRepositorySequelize {
     });
     return patient ? this.toDomain(patient) : null;
   }
-  
 }
 
 module.exports = PatientRepositorySequelize;

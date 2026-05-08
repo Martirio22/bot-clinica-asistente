@@ -8,12 +8,9 @@ class AppointmentController {
     this.eliminarUC = eliminar;
   }
 
-  // Le añadimos el parámetro 'config' que trae nuestro flag
 crear = async (req, res, config = {}) => {
     
-    // Si config.esBot es true, ignoramos el req.user
     const esBot = config.esBot || !req.user;
-
     const appointmentData = {
       ...req.body,
       createdByUserId: esBot ? null : (req.user.id || req.user.sub),
@@ -22,7 +19,6 @@ crear = async (req, res, config = {}) => {
     };
 
     const data = await this.crearUC.ejecutar(appointmentData);
-    
     res.status(201).json({ 
       success: true, 
       message: `Cita agendada exitosamente desde ${appointmentData.origin}`,
@@ -37,7 +33,6 @@ crear = async (req, res, config = {}) => {
       startDate: req.query.startDate,
       endDate: req.query.endDate
     };
-
     const data = await this.listarUC.ejecutar(filters);
     res.json({ success: true, data });
   };
@@ -49,14 +44,12 @@ crear = async (req, res, config = {}) => {
 
   disponibilidad = async (req, res) => {
     const { doctorId, fecha } = req.query;
-    
     if (!doctorId || !fecha) {
         return res.status(400).json({ 
             success: false, 
             message: "doctorId y fecha son requeridos" 
         });
     }
-
     const data = await this.disponibilidadUC.ejecutar(doctorId, fecha);
     res.json({ success: true, data });
 };

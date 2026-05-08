@@ -2,7 +2,6 @@ const { Op } = require("sequelize");
 const Appointment = require("../Dominio/Entidades/Appointment");
 const AppointmentModel = require("./AppointmentModel");
 
-// Importación de Modelos para los Includes
 const PatientModel = require("../../../Clinic/Patients/Infraestructura/PatientModel");
 const DoctorModel = require("../../../Clinic/Doctors/Infraestructura/DoctorModel");
 const SpecialtyModel = require("../../../Clinic/Specialties/Infraestructura/SpecialtyModel");
@@ -13,7 +12,6 @@ const UserModel = require("../../../Security/Users/Infraestructura/UserModel");
 
 class AppointmentRepositorySequelize {
   
-  // Mapeo de persistencia a dominio con sus 7 relaciones
   toDomain(model) {
     const plain = model.toJSON ? model.toJSON() : model;
     return new Appointment({
@@ -47,6 +45,11 @@ class AppointmentRepositorySequelize {
     });
     return data ? this.toDomain(data) : null;
   }
+
+async findStatusByCode(code) {
+  const status = await AppointmentStatusModel.findOne({ where: { code } });
+  return status ? status.id : null;
+}
 
   async findAll(filters = {}) {
   const { doctorId, patientId, date, statusId } = filters;

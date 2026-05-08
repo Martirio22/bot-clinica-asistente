@@ -10,7 +10,6 @@ class CrearDoctor {
   }
 
   async ejecutar(data) {
-  // 1. La entidad valida (Ej: "especialidad requerida")
   const nuevoDoctor = new Doctor({ ...data, isActive: true });
 
   const user = await this.userRepository.findById(nuevoDoctor.userId);
