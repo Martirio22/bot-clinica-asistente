@@ -53,6 +53,21 @@ class DoctorScheduleRepositorySequelize {
     return schedules.map(s => this.toDomain(s));
   }
 
+async findSchedule(doctorId, dayOfWeek, startDate, endDate) {
+  const startTime = new Date(startDate).toTimeString().split(' ')[0];
+  const endTime = new Date(endDate).toTimeString().split(' ')[0];
+
+  return await DoctorScheduleModel.findOne({
+    where: {
+      doctorId,
+      dayOfWeek,
+      isActive: true,
+      startTime: { [Op.lte]: startTime },
+      endTime: { [Op.gte]: endTime }
+    }
+  });
+}
+
   async update(id, data) {
     await DoctorScheduleModel.update(data, { where: { id } });
     return await this.findById(id);

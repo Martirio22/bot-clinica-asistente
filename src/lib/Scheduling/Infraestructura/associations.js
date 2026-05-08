@@ -5,6 +5,10 @@ const OfficeModel = require("../../Clinic/Offices/Infraestructura/OfficeModel");
 const ScheduleBlockModel = require("../DoctorScheduleBlocks/Infraestructura/ScheduleBlockModel");
 const ScheduleBlockTypeModel = require("../ScheduleBlockType/Infraestructura/ScheduleBlockTypeModel");
 const UserModel = require("../../Security/Users/Infraestructura/UserModel");
+const AppointmentModel = require("../Appointments/Infraestructura/AppointmentModel");
+const PatientModel = require("../../Clinic/Patients/Infraestructura/PatientModel");
+const SpecialtyModel = require("../../Clinic/Specialties/Infraestructura/SpecialtyModel");
+const AppointmentStatusModel = require("../AppointmentStatus/Infraestructura/AppointmentStatusModel");
 
 function setupSchedulingAssociations() {
   DoctorScheduleModel.belongsTo(DoctorModel, { foreignKey: "doctorId", as: "doctor" });
@@ -17,9 +21,17 @@ function setupSchedulingAssociations() {
   ScheduleBlockModel.belongsTo(DoctorModel, { foreignKey: "doctorId", as: "doctor" });
   ScheduleBlockModel.belongsTo(ScheduleBlockTypeModel, { foreignKey: "blockingTypeId", as: "blockingType" });
   ScheduleBlockModel.belongsTo(UserModel, { foreignKey: "registeredByUserId", as: "user" });
-  
   DoctorModel.hasMany(ScheduleBlockModel, { foreignKey: "doctorId", as: "blockings" });
   ScheduleBlockTypeModel.hasMany(ScheduleBlockModel, { foreignKey: "blockingTypeId", as: "blockings" });
+
+  //Citas
+  AppointmentModel.belongsTo(PatientModel, { foreignKey: "patientId", as: "patient" });
+  AppointmentModel.belongsTo(DoctorModel, { foreignKey: "doctorId", as: "doctor" });
+  AppointmentModel.belongsTo(SpecialtyModel, { foreignKey: "specialtyId", as: "specialty" });
+  AppointmentModel.belongsTo(BranchModel, { foreignKey: "branchId", as: "branch" });
+  AppointmentModel.belongsTo(OfficeModel, { foreignKey: "officeId", as: "office" });
+  AppointmentModel.belongsTo(AppointmentStatusModel, { foreignKey: "statusId", as: "status" });
+  AppointmentModel.belongsTo(UserModel, { foreignKey: "createdByUserId", as: "creatorUser" });
 }
 
 module.exports = setupSchedulingAssociations;

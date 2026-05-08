@@ -9,6 +9,9 @@ const ASRepositorySequelize = require("../../AppointmentStatus/Infraestructura/A
 const SBTRepositorySequelize = require("../../ScheduleBlockType/Infraestructura/SBTRepositorySequelize");
 const DoctorScheduleRepositorySequelize = require("../../DoctorSchedules/Infraestructura/DoctorScheduleRepositorySequelize");
 const ScheduleBlockRepositorySequelize = require("../../DoctorScheduleBlocks/Infraestructura/ScheduleBlockRepositorySequelize");
+const AppointmentRepositorySequelize = require("../../Appointments/Infraestructura/AppointmentRepositorySequelize");
+const PatientRepositorySequelize = require("../../../Clinic/Patients/Infraestructura/PatientRepositorySequelize");
+const SpecialtyRepositorySequelize = require("../../../Clinic/Specialties/Infraestructura/SpecialtyRepositorySequelize");
 
 const CrearAppointmentStatus = require("../../AppointmentStatus/Aplicacion/CrearAppointmentStatus");
 const ListarAppointmentStatus = require("../../AppointmentStatus/Aplicacion/ListarAppointmentStatus");
@@ -34,6 +37,13 @@ const ObtenerScheduleBlockPorId = require("../../DoctorScheduleBlocks/Aplicacion
 const ActualizarScheduleBlock = require("../../DoctorScheduleBlocks/Aplicacion/ActualizarScheduleBlock");
 const EliminarScheduleBlock = require("../../DoctorScheduleBlocks/Aplicacion/EliminarScheduleBlock");
 
+const CrearAppointment = require("../../Appointments/Aplicacion/CrearAppointment");
+const ListarAppointment = require("../../Appointments/Aplicacion/ListarAppointment");
+const ObtenerAppointmentPorId = require("../../Appointments/Aplicacion/ObtenerAppointmentPorId");
+const ObtenerDisponibilidadPorMedico = require("../../Appointments/Aplicacion/ObtenerDisponibilidadPorMedico");
+const ActualizarAppointment = require("../../Appointments/Aplicacion/ActualizarAppointment");
+const EliminarAppointment = require("../../Appointments/Aplicacion/EliminarAppointment");
+
 const AppointmentStatusController = require("../../AppointmentStatus/Infraestructura/http/AppointmentStatusController");
 const AppointmentStatusRoutes = require("../../AppointmentStatus/Infraestructura/http/AppointmentStatusRoutes");
 const ScheduleBlockTypeController = require("../../ScheduleBlockType/Infraestructura/http/ScheduleBlockTypeController");
@@ -42,6 +52,8 @@ const DoctorScheduleController = require("../../DoctorSchedules/Infraestructura/
 const DoctorScheduleRoutes = require("../../DoctorSchedules/Infraestructura/http/DoctorScheduleRoutes");
 const ScheduleBlockController = require("../../DoctorScheduleBlocks/Infraestructura/http/ScheduleBlockController");
 const ScheduleBlockRoutes = require("../../DoctorScheduleBlocks/Infraestructura/http/ScheduleBlockRoutes");
+const AppointmentController = require("../../Appointments/Infraestructura/http/AppointmentController");
+const AppointmentRoutes = require("../../Appointments/Infraestructura/http/AppointmentRoutes");
 
 const e = require("express");
 
@@ -55,6 +67,9 @@ module.exports = function registerSchedulingModule(app){
     const officeRepository = new OfficeRepositorySequelize();
     const blockRepository = new ScheduleBlockRepositorySequelize();
     const userRepository = new UserRepositorySequelize();
+    const appointmentRepository = new AppointmentRepositorySequelize();
+    const patientRepository = new PatientRepositorySequelize();
+    const specialtyRepository = new SpecialtyRepositorySequelize();
 
 const appointmentStatusController = new AppointmentStatusController({
   crear: new CrearAppointmentStatus(appointmentStatusRepository),
@@ -88,8 +103,19 @@ const scheduleBlockController = new ScheduleBlockController({
   eliminar: new EliminarScheduleBlock(blockRepository)
 });
 
+const appointmentController = new AppointmentController({
+        crear: new CrearAppointment(appointmentRepository, doctorRepository, patientRepository, doctorScheduleRepository, blockRepository,
+          specialtyRepository, branchRepository, officeRepository, appointmentStatusRepository),
+        listar: new ListarAppointment(appointmentRepository),
+        obtener: new ObtenerAppointmentPorId(appointmentRepository),
+        actualizar: new ActualizarAppointment(appointmentRepository, doctorRepository),
+        eliminar: new EliminarAppointment(appointmentRepository),
+        disponibilidad: new ObtenerDisponibilidadPorMedico( appointmentRepository, doctorScheduleRepository, blockRepository, doctorRepository )
+    });
+
 app.use("/api/scheduling/appointment-status", AppointmentStatusRoutes(appointmentStatusController));
 app.use("/api/scheduling/block-types", ScheduleBlockTypeRoutes(scheduleBlockTypeController));
 app.use("/api/scheduling/doctor-schedules", DoctorScheduleRoutes(doctorScheduleController));
 app.use("/api/scheduling/block", ScheduleBlockRoutes(scheduleBlockController));
+app.use("/api/scheduling/appointments", AppointmentRoutes(appointmentController));
 }
