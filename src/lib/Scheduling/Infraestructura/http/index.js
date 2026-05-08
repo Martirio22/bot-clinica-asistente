@@ -12,6 +12,7 @@ const ScheduleBlockRepositorySequelize = require("../../DoctorScheduleBlocks/Inf
 const AppointmentRepositorySequelize = require("../../Appointments/Infraestructura/AppointmentRepositorySequelize");
 const PatientRepositorySequelize = require("../../../Clinic/Patients/Infraestructura/PatientRepositorySequelize");
 const SpecialtyRepositorySequelize = require("../../../Clinic/Specialties/Infraestructura/SpecialtyRepositorySequelize");
+const AARepositorySequelize = require("../../AppointmentAuthorizations/Infraestructura/AARespositorySequelize");
 
 const CrearAppointmentStatus = require("../../AppointmentStatus/Aplicacion/CrearAppointmentStatus");
 const ListarAppointmentStatus = require("../../AppointmentStatus/Aplicacion/ListarAppointmentStatus");
@@ -44,6 +45,12 @@ const ObtenerDisponibilidadPorMedico = require("../../Appointments/Aplicacion/Ob
 const ActualizarAppointment = require("../../Appointments/Aplicacion/ActualizarAppointment");
 const EliminarAppointment = require("../../Appointments/Aplicacion/EliminarAppointment");
 
+const CrearAttendanceAuthorization = require("../../AppointmentAuthorizations/Aplicacion/CrearAttendanceAuthorization");
+const ListarAttendanceAuthorization = require("../../AppointmentAuthorizations/Aplicacion/ListarAttendanceAuthorization");
+const ObtenerAttendanceAuthorizationPorId = require("../../AppointmentAuthorizations/Aplicacion/ObtenerAttendanceAuthorizationPorId");
+const ActualizarAttendanceAuthorization = require("../../AppointmentAuthorizations/Aplicacion/ActualizarAttendanceAuthorization");
+const EliminarAttendanceAuthorization = require("../../AppointmentAuthorizations/Aplicacion/EliminarAttendanceAuthorization");
+
 const AppointmentStatusController = require("../../AppointmentStatus/Infraestructura/http/AppointmentStatusController");
 const AppointmentStatusRoutes = require("../../AppointmentStatus/Infraestructura/http/AppointmentStatusRoutes");
 const ScheduleBlockTypeController = require("../../ScheduleBlockType/Infraestructura/http/ScheduleBlockTypeController");
@@ -54,6 +61,8 @@ const ScheduleBlockController = require("../../DoctorScheduleBlocks/Infraestruct
 const ScheduleBlockRoutes = require("../../DoctorScheduleBlocks/Infraestructura/http/ScheduleBlockRoutes");
 const AppointmentController = require("../../Appointments/Infraestructura/http/AppointmentController");
 const AppointmentRoutes = require("../../Appointments/Infraestructura/http/AppointmentRoutes");
+const AttendanceAuthorizationController = require("../../AppointmentAuthorizations/Infraestructura/http/AttendanceAuthorizationController");
+const AttendanceAuthorizationRoutes = require("../../AppointmentAuthorizations/Infraestructura/http/AttendanceAuthorizationRoutes");
 
 const e = require("express");
 
@@ -70,6 +79,7 @@ module.exports = function registerSchedulingModule(app){
     const appointmentRepository = new AppointmentRepositorySequelize();
     const patientRepository = new PatientRepositorySequelize();
     const specialtyRepository = new SpecialtyRepositorySequelize();
+    const attendanceRepository = new AARepositorySequelize();
 
 const appointmentStatusController = new AppointmentStatusController({
   crear: new CrearAppointmentStatus(appointmentStatusRepository),
@@ -113,9 +123,18 @@ const appointmentController = new AppointmentController({
         disponibilidad: new ObtenerDisponibilidadPorMedico( appointmentRepository, doctorScheduleRepository, blockRepository, doctorRepository )
     });
 
+    const attendanceController = new AttendanceAuthorizationController({
+      crear: new CrearAttendanceAuthorization(attendanceRepository, appointmentRepository, userRepository),
+      listar: new ListarAttendanceAuthorization(attendanceRepository),
+      obtener: new ObtenerAttendanceAuthorizationPorId(attendanceRepository),
+      actualizar: new ActualizarAttendanceAuthorization(attendanceRepository),
+      eliminar: new EliminarAttendanceAuthorization(attendanceRepository)
+    });
+
 app.use("/api/scheduling/appointment-status", AppointmentStatusRoutes(appointmentStatusController));
 app.use("/api/scheduling/block-types", ScheduleBlockTypeRoutes(scheduleBlockTypeController));
 app.use("/api/scheduling/doctor-schedules", DoctorScheduleRoutes(doctorScheduleController));
 app.use("/api/scheduling/block", ScheduleBlockRoutes(scheduleBlockController));
 app.use("/api/scheduling/appointments", AppointmentRoutes(appointmentController));
+app.use("/api/scheduling/attendance", AttendanceAuthorizationRoutes(attendanceController));
 }

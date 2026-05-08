@@ -7,8 +7,16 @@ class EliminarAppointment {
 
   async ejecutar(id) {
     const appointment = await this.appointmentRepo.findById(id);
-    if (!appointment) throw new NotFoundError("Cita no encontrada");
-    await this.appointmentRepo.softDelete(id);
+    if (!appointment) {
+      throw new NotFoundError("Cita no encontrada");
+    }
+    const canceladaStatusId = await this.appointmentRepo.findStatusByCode('CANCELADA');
+    
+    if (canceladaStatusId) {
+      await this.appointmentRepo.softDeleteWithStatus(id, canceladaStatusId);
+    } else {
+      await this.appointmentRepo.softDelete(id);
+    }
   }
 }
 

@@ -9,6 +9,7 @@ const AppointmentModel = require("../Appointments/Infraestructura/AppointmentMod
 const PatientModel = require("../../Clinic/Patients/Infraestructura/PatientModel");
 const SpecialtyModel = require("../../Clinic/Specialties/Infraestructura/SpecialtyModel");
 const AppointmentStatusModel = require("../AppointmentStatus/Infraestructura/AppointmentStatusModel");
+const AttendanceAuthorizationModel = require("../AppointmentAuthorizations/Infraestructura/AttendanceAuthorizationModel");
 
 function setupSchedulingAssociations() {
   DoctorScheduleModel.belongsTo(DoctorModel, { foreignKey: "doctorId", as: "doctor" });
@@ -32,6 +33,11 @@ function setupSchedulingAssociations() {
   AppointmentModel.belongsTo(OfficeModel, { foreignKey: "officeId", as: "office" });
   AppointmentModel.belongsTo(AppointmentStatusModel, { foreignKey: "statusId", as: "status" });
   AppointmentModel.belongsTo(UserModel, { foreignKey: "createdByUserId", as: "creatorUser" });
+
+  // Autorización Atencion
+AttendanceAuthorizationModel.belongsTo(AppointmentModel, { foreignKey: "appointmentId", as: "appointment" });
+AttendanceAuthorizationModel.belongsTo(UserModel, { foreignKey: "authorizedByUserId", as: "authorizedByUser" });
+AppointmentModel.hasOne(AttendanceAuthorizationModel, { foreignKey: "appointmentId", as: "attendanceAuthorization" });
 }
 
 module.exports = setupSchedulingAssociations;

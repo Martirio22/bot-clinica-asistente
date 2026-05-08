@@ -25,6 +25,7 @@ require("../../lib/Scheduling/ScheduleBlockType/Infraestructura/ScheduleBlockTyp
 require("../../lib/Scheduling/DoctorSchedules/Infraestructura/DoctorScheduleModel");
 require("../../lib/Scheduling/DoctorScheduleBlocks/Infraestructura/ScheduleBlockModel");
 require("../../lib/Scheduling/Appointments/Infraestructura/AppointmentModel");
+require("../../lib/Scheduling/AppointmentAuthorizations/Infraestructura/AttendanceAuthorizationModel");
 
 require("../../lib/MedicalCare/AttentionStatus/Infraestructura/AttentionStatusModel");
 

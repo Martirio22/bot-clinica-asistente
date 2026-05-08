@@ -132,8 +132,24 @@ async findStatusByCode(code) {
     return duplicate ? this.toDomain(duplicate) : null;
   }
 
+async findStatusByCode(code) {
+  const status = await AppointmentStatusModel.findOne({ where: { code } });
+  return status ? status.id : null;
+}
+
+async updateStatus(appointmentId, statusId) {
+  await AppointmentModel.update({ statusId }, { where: { id: appointmentId } });
+}
+
   async softDelete(id) {
   return await AppointmentModel.update({ isActive: false }, { where: { id } }
+  );
+}
+
+async softDeleteWithStatus(id, statusId) {
+  return await AppointmentModel.update(
+    { isActive: false, statusId: statusId }, 
+    { where: { id } }
   );
 }
 }
