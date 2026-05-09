@@ -30,7 +30,7 @@ class AttendanceAuthorizationController {
 
   eliminar = async (req, res) => {
     await this.eliminarUC.ejecutar(req.params.id);
-    res.json({ success: true, message: "Registro eliminado" });
+    res.json({ success: true, message: "Autorizacion desactivada correctamente" });
   };
 }
 
