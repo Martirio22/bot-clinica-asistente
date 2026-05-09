@@ -4,6 +4,7 @@ const AppointmentModel = require("../../Scheduling/Appointments/Infraestructura/
 const MedicalAttentionModel = require("../MedicalAttentions/Infraestructura/MedicalAttentionModel");
 const AttentionStatusModel = require("../AttentionStatus/Infraestructura/AttentionStatusModel");
 const MedicalPrescriptionModel = require("../MedicalPrescriptions/Infraestructura/MedicalPrescriptionModel");
+const MedicalPrescriptionDetailModel = require("../MedicalPrescriptionDetails/Infraestructura/MedicalPrescriptionDetailModel");
 
 function setupMedicalCareAssociations() {
   // MedicalAttention -> Cita
@@ -19,8 +20,13 @@ function setupMedicalCareAssociations() {
   // Relaciones Inversas para consultas
   AppointmentModel.hasOne(MedicalAttentionModel, { foreignKey: "appointmentId", as: "medicalAttention" });
 
+  //Recetas Medicas
   MedicalAttentionModel.hasOne(MedicalPrescriptionModel, { foreignKey: "medicalAttentionId", as: "prescription" });
   MedicalPrescriptionModel.belongsTo(MedicalAttentionModel, { foreignKey: "medicalAttentionId", as: "medicalAttention" });
+
+  //Detalle de la Receta
+  MedicalPrescriptionModel.hasMany(MedicalPrescriptionDetailModel, { foreignKey: "medicalPrescriptionId", as: "items" });
+  MedicalPrescriptionDetailModel.belongsTo(MedicalPrescriptionModel, { foreignKey: "medicalPrescriptionId", as: "prescription" });
 }
 
 module.exports = setupMedicalCareAssociations;

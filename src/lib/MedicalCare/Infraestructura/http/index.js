@@ -1,7 +1,8 @@
 const AtSRepositorySequelize = require("../../AttentionStatus/Infraestructura/AtSRepositorySequelize");
 const MARepositorySequelize = require("../../MedicalAttentions/Infraestructura/MARepositorySequelize");
 const AppointmentSequelize = require("../../../Scheduling/Appointments/Infraestructura/AppointmentRepositorySequelize");
-const MedicalPrescriptionSequelize = require("../../MedicalPrescriptions/Infraestructura/MPRepositorySequelize");
+const MPRepositorySequelize = require("../../MedicalPrescriptions/Infraestructura/MPRepositorySequelize");
+const MPDRepositorySequelize = require("../../MedicalPrescriptionDetails/Infraestructura/MPDRepositorySequelize");
 
 const CrearAttentionStatus = require("../../AttentionStatus/Aplicacion/CrearAttentionStatus");
 const ListarAttentionStatus = require("../../AttentionStatus/Aplicacion/ListarAttentionStatus");
@@ -22,13 +23,20 @@ const ActualizarMedicalPrescription = require("../../MedicalPrescriptions/Aplica
 const EnviarPrescriptionWhatsapp = require("../../MedicalPrescriptions/Aplicacion/EnviarPrescriptionWhatsApp");
 const EliminarMedicalPrescription = require("../../MedicalPrescriptions/Aplicacion/EliminarMedicalPrescription");
 
+const CrearMedicalPrescriptionDetail = require("../../MedicalPrescriptionDetails/Aplicacion/CrearMedicalPrescriptionDetail");
+const ListarMedicalPrescriptionDetail = require("../../MedicalPrescriptionDetails/Aplicacion/ListarMedicalPrescriptionDetail");
+const ObtenerMedicalPrescriptionDetailPorId = require("../../MedicalPrescriptionDetails/Aplicacion/ObtenerMedicalPrescriptionDetailPorId");
+const ActualizarMedicalPrescriptionDetail = require("../../MedicalPrescriptionDetails/Aplicacion/ActualizarMedicalPrescriptionDetail");
+const EliminarMedicalPrescriptionDetail = require("../../MedicalPrescriptionDetails/Aplicacion/EliminarMedicalPrescriptionDetail");
+
 const AttentionStatusController = require("../../AttentionStatus/Infraestructura/http/AttentionStatusController");
 const AttentionStatusRoutes = require("../../AttentionStatus/Infraestructura/http/AttentionStatusRoutes");
 const MedicalAttentionController = require("../../MedicalAttentions/Infraestructura/http/MedicalAttentionController");
 const MedicalAttentionRoutes = require("../../MedicalAttentions/Infraestructura/http/MedicalAttentionRoutes");
 const MedicalPrescriptionController = require("../../MedicalPrescriptions/Infraestructura/http/MedicalPrescriptionController");
 const MedicalPrescriptionRoutes = require("../../MedicalPrescriptions/Infraestructura/http/MedicalPrescriptionRoutes");
-const MPRepositorySequelize = require("../../MedicalPrescriptions/Infraestructura/MPRepositorySequelize");
+const MedicalPrescriptionDetailController = require("../../MedicalPrescriptionDetails/Infraestructura/http/MedicalPrescriptionDetailController");
+const MedicalPrescriptionDetailRoutes = require("../../MedicalPrescriptionDetails/Infraestructura/http/MedicalPrescriptionDetailRoutes");
 
 module.exports = function registerMedicalCareModule(app){
 
@@ -36,6 +44,7 @@ module.exports = function registerMedicalCareModule(app){
     const medicalAttentionRepository = new MARepositorySequelize();
     const appointmentRepository = new AppointmentSequelize();
     const medicalPrescriptionRepository = new MPRepositorySequelize();
+    const prescriptionDetailRepository = new MPDRepositorySequelize();
 
     const attentionStatusController = new AttentionStatusController({
         crear: new CrearAttentionStatus(attentionStatusRepository),
@@ -55,14 +64,23 @@ module.exports = function registerMedicalCareModule(app){
 
     const medicalPrescriptionController = new MedicalPrescriptionController({
     crear: new CrearMedicalPrescription(medicalPrescriptionRepository, medicalAttentionRepository),
-    enviarWhatsapp: new EnviarPrescriptionWhatsapp(medicalPrescriptionRepository),
+    enviarWhatsapp: new EnviarPrescriptionWhatsapp(medicalPrescriptionRepository, prescriptionDetailRepository),
     listar: new ListarMedicalPrescription(medicalPrescriptionRepository),
     obtener: new ObtenerMedicalPrescriptionPorId(medicalPrescriptionRepository),
     actualizar: new ActualizarMedicalPrescription(medicalPrescriptionRepository),
     eliminar: new EliminarMedicalPrescription(medicalPrescriptionRepository)
 });
 
+    const prescriptionDetailController = new MedicalPrescriptionDetailController({
+        crear: new CrearMedicalPrescriptionDetail(prescriptionDetailRepository, medicalPrescriptionRepository),
+        listar: new ListarMedicalPrescriptionDetail(prescriptionDetailRepository),
+        obtener: new ObtenerMedicalPrescriptionDetailPorId(prescriptionDetailRepository),
+        actualizar: new ActualizarMedicalPrescriptionDetail(prescriptionDetailRepository, medicalPrescriptionRepository),
+        eliminar: new EliminarMedicalPrescriptionDetail(prescriptionDetailRepository, medicalPrescriptionRepository)
+    });
+
     app.use("/api/medicalcare/attention-status", AttentionStatusRoutes(attentionStatusController));
-    app.use("/api/medicalcare/medical_attention", MedicalAttentionRoutes(medicalAttentionController));
+    app.use("/api/medicalcare/medical-attention", MedicalAttentionRoutes(medicalAttentionController));
     app.use("/api/medicalcare/prescriptions", MedicalPrescriptionRoutes(medicalPrescriptionController));
+    app.use("/api/medicalcare/prescriptions-detail", MedicalPrescriptionDetailRoutes(prescriptionDetailController));
 }

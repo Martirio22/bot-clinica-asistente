@@ -6,7 +6,8 @@ class MPRepositorySequelize {
     const plain = model.toJSON ? model.toJSON() : model;
     return new MedicalPrescription({
       ...plain,
-      medicalAttention: plain.medicalAttention || null
+      medicalAttention: plain.medicalAttention || null,
+      items: plain.items || []
     });
   }
 
@@ -20,7 +21,8 @@ class MPRepositorySequelize {
       include: [{ 
         association: "medicalAttention",
         include: ["patient", "doctor"] 
-      }]
+      },
+        { association: "items" }]
     });
     return data ? this.toDomain(data) : null;
   }
@@ -32,12 +34,16 @@ class MPRepositorySequelize {
   
  async findAllByDoctor(userId) {
     const data = await MedicalPrescriptionModel.findAll({
-      include: [{association: "medicalAttention", required: false,include: ["patient", 
-          { association: "doctor",  where: { userId }, required: true}
-        ]
-      }],
+      where: { isActive: true },
+      include: [
+        {association: "medicalAttention", required: true, include: ["patient",
+            { association: "doctor",  where: { userId },  required: true  }
+          ]},
+        {  association: "items",  where: { isActive: true }, required: false }
+      ],
       order: [["issueDate", "DESC"]]
     });
+    
     return data.map(d => this.toDomain(d));
   }
   async findByAttentionId(medicalAttentionId) {

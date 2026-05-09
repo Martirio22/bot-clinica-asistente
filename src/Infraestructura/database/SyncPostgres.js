@@ -31,6 +31,8 @@ require("../../lib/Scheduling/AppointmentAuthorizations/Infraestructura/Attendan
 require("../../lib/MedicalCare/AttentionStatus/Infraestructura/AttentionStatusModel");
 require("../../lib/MedicalCare/MedicalAttentions/Infraestructura/MedicalAttentionModel");
 require("../../lib/MedicalCare/MedicalPrescriptions/Infraestructura/MedicalPrescriptionModel");
+require("../../lib/MedicalCare/MedicalPrescriptionDetails/Infraestructura/MedicalPrescriptionDetailModel");
+
 async function syncPostgres() {
   setupSecurityAssociations();
   setupClinicAssociations();

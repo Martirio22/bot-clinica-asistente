@@ -8,7 +8,8 @@ class MedicalPrescription {
     isSentWhatsapp = false,
     whatsappSentDate = null,
     isActive = true,
-    medicalAttention = null
+    medicalAttention = null,
+    items = []
   }) {
     if (!medicalAttentionId) throw new Error("La receta debe estar ligada a una atención médica");
 
@@ -21,6 +22,7 @@ class MedicalPrescription {
     this.whatsappSentDate = whatsappSentDate;
     this.isActive = isActive;
     this.medicalAttention = medicalAttention;
+    this.items = items;
   }
 }
 
