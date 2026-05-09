@@ -8,7 +8,8 @@ module.exports = (controller) => {
   router.use(authMiddleware);
 
   router.post("/", roleMiddleware(["MEDICO"]), asyncHandler(controller.iniciar));
- // router.get("/:id")
+  router.get("/", roleMiddleware(["MEDICO"]), asyncHandler(controller.listar));
+  router.get("/:id", roleMiddleware(["MEDICO"]), asyncHandler(controller.obtenerPorId));
   router.put("/:id/finalizar", roleMiddleware(["MEDICO"]), asyncHandler(controller.finalizar));
   router.delete("/:id", roleMiddleware(["MEDICO"]), asyncHandler(controller.eliminar));
 

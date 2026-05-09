@@ -4,9 +4,11 @@ const AttentionStatusModel = require("../../AttentionStatus/Infraestructura/Atte
 
 class MARepositorySequelize {
   toDomain(model) {
-    const plain = model.toJSON();
-    return new MedicalAttention(plain);
-  }
+  const plain = model.toJSON ? model.toJSON() : model;
+  return new MedicalAttention({
+    ...plain
+  });
+}
 
   async findStatusByCode(code) {
     const status = await AttentionStatusModel.findOne({ where: { code } });
@@ -25,8 +27,22 @@ class MARepositorySequelize {
     return data ? this.toDomain(data) : null;
   }
 
+  async findAllByDoctor(userId) {
+  const data = await MedicalAttentionModel.findAll({
+    include: ["patient", "status",
+      {association: "doctor", where: { userId: userId }}
+    ],
+    order: [['startDate', 'DESC']]
+  });
+  
+  return data.map(item => this.toDomain(item));
+}
+
   async findByAppointmentId(appointmentId) {
-    const data = await MedicalAttentionModel.findOne({ where: { appointmentId } });
+    const data = await MedicalAttentionModel.findOne({ 
+      where: { appointmentId },
+      include: ["doctor"]
+    });
     return data ? this.toDomain(data) : null;
   }
 

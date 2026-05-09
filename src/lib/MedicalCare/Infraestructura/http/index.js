@@ -11,6 +11,8 @@ const EliminarAttentionStatus = require("../../AttentionStatus/Aplicacion/Elimin
 const IniciarMedicalAttention = require("../../MedicalAttentions/Aplicacion/IniciarMedicalAttention");
 const FinalizarMedicalAttention = require("../../MedicalAttentions/Aplicacion/FinalizarMedicalAttention");
 const EliminarMedicalAttention = require("../../MedicalAttentions/Aplicacion/EliminarMedicalAttention");
+const ListarMedicalAttention = require("../../MedicalAttentions/Aplicacion/ListarMedicalAttention");
+const ObtenerMedicalAttentionPorId = require("../../MedicalAttentions/Aplicacion/ObtenerMedicalAttentionPorId");
 
 const AttentionStatusController = require("../../AttentionStatus/Infraestructura/http/AttentionStatusController");
 const AttentionStatusRoutes = require("../../AttentionStatus/Infraestructura/http/AttentionStatusRoutes");
@@ -34,7 +36,9 @@ module.exports = function registerMedicalCareModule(app){
     const medicalAttentionController = new MedicalAttentionController({
         iniciar: new IniciarMedicalAttention(medicalAttentionRepository, appointmentRepository),
         finalizar: new FinalizarMedicalAttention(medicalAttentionRepository),
-        eliminar: new EliminarMedicalAttention(medicalAttentionRepository)
+        eliminar: new EliminarMedicalAttention(medicalAttentionRepository),
+        listar: new ListarMedicalAttention(medicalAttentionRepository),
+        obtener: new ObtenerMedicalAttentionPorId(medicalAttentionRepository)
     });
 
     app.use("/api/medicalcare/attention-status", AttentionStatusRoutes(attentionStatusController));
