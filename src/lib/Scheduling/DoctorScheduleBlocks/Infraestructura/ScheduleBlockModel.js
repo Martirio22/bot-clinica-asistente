@@ -48,7 +48,7 @@ ScheduleBlockModel.init({
 }, {
   sequelize,
   schema: "scheduling",
-  tableName: "schedule_block"
+  tableName: "schedule_blocks"
 });
 
 module.exports = ScheduleBlockModel;
