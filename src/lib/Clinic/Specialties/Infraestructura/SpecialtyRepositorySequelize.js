@@ -42,6 +42,7 @@ class SpecialtyRepositorySequelize {
 
   async findAll() {
     const data = await SpecialtyModel.findAll({
+      where: { isActive: true },
       order: [["createdAt", "DESC"]]
     });
 

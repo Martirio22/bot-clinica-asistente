@@ -14,11 +14,9 @@ class CrearScheduleBlock {
     const nuevoBloqueo = new ScheduleBlock({ ...data, isActive: true });
 
     const doctor = await this.doctorRepo.findById(nuevoBloqueo.doctorId);
-    if (!doctor || !doctor.isActive) throw new ConflictError("Médico inválido o inactivo");
-
+    if (!doctor || !doctor.isActive) throw new NotFoundError("Médico no encontrado o inactivo");
     const blockType = await this.blockTypeRepo.findById(nuevoBloqueo.blockingTypeId);
-    if (!blockType || !blockType.isActive) throw new ConflictError("Tipo de bloqueo inválido o inactivo");
-
+    if (!blockType || !blockType.isActive) throw new NotFoundError("Tipo de bloqueo no encontrado o inactivo");
     const user = await this.userRepo.findById(nuevoBloqueo.registeredByUserId);
     if (!user) throw new NotFoundError("Usuario registrador no encontrado");
 
@@ -29,7 +27,7 @@ class CrearScheduleBlock {
     );
 
     if (existeSolapamiento) {
-      throw new ConflictError("El médico ya tiene un bloqueo en ese rango de fechas");
+      throw new ConflictError("El médico ya tiene un bloqueo (vacaciones, permiso, etc.) en este rango de fechas");
     }
 
     return await this.blockingRepo.create(nuevoBloqueo);

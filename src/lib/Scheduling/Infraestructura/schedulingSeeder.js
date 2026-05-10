@@ -10,7 +10,9 @@ async function seedScheduling() {
     { code: "CANCELADA", name: "Cancelada", description: "Cita cancelada" },
     { code: "COMPLETADA", name: "Completada", description: "Cita atendida correctamente" },
     { code: "ATENDIDA", name: "ATENDIDA", description: "La cita ya fue atentida" },
-    { code: "NO_ASISTIO", name: "No asistió", description: "El paciente no se presentó" }
+    { code: "NO_ASISTIO", name: "No asistió", description: "El paciente no se presentó" },
+    { code: "REPROGRAMADA", name: "Reprogramada", description: "La cita fue reprogramada" },
+    { code: "EXPIRADA", name: "Expirada", description: "La cita fue expirada" }
   ];
 
   for (const status of statuses) {

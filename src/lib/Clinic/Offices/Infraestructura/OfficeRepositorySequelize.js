@@ -45,11 +45,19 @@ class OfficeRepositorySequelize {
       include: [
         { model: BranchModel, as: "branch" }
       ],
+      where: { isActive: true },
       order: [["createdAt", "DESC"]]
     });
 
     return offices.map(o => this.toDomain(o));
   }
+  async findByBranch(branchId) {
+  const offices = await OfficeModel.findAll({
+    where: { branchId: branchId, isActive: true},
+    order: [["name", "ASC"]]
+  });
+  return offices.map(o => this.toDomain(o));
+}
 
   async update(id, data) {
     await OfficeModel.update(data, { where: { id } });

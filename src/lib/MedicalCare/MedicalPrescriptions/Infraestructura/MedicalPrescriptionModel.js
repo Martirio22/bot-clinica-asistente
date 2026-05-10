@@ -15,7 +15,7 @@ MedicalPrescriptionModel.init({
 }, {
   sequelize,
   schema: "medicalcare",
-  tableName: "medical_prescription"
+  tableName: "medical_prescriptions"
 });
 
 module.exports = MedicalPrescriptionModel;

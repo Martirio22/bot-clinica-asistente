@@ -48,10 +48,9 @@ class DoctorRepositorySequelize {
 
   async findAll() {
     const doctors = await DoctorModel.findAll({
-      include: [
-        { model: SecurityUserModel, as: "user" },
-        { model: SpecialtyModel, as: "specialty" }
+      include: [{ model: SecurityUserModel, as: "user" }, { model: SpecialtyModel, as: "specialty" }
       ],
+      where: { isActive: true },
       order: [["createdAt", "DESC"]]
     });
 
@@ -65,6 +64,19 @@ class DoctorRepositorySequelize {
 
     return data ? this.toDomain(data) : null;
   }
+
+  async findBySpecialty(specialtyId) {
+  const doctors = await DoctorModel.findAll({
+    where: { specialtyId,  isActive: true },
+    include: [
+      { model: SecurityUserModel, as: "user" },
+      { model: SpecialtyModel, as: "specialty" }
+    ],
+    order: [[{ model: SecurityUserModel, as: "user" }, "firstName", "ASC"]]
+  });
+
+  return doctors.map(d => this.toDomain(d));
+}
 
   async update(id, data) {
     await DoctorModel.update(data, { where: { id } });

@@ -18,15 +18,13 @@ class AuthorizeAttendance {
     });
     const appointment = await this.appointmentRepo.findById(nuevaAuth.appointmentId);
     if (!appointment) throw new NotFoundError("La cita no existe");
+    if (!appointment.isActive) { throw new ConflictError("No se puede autorizar una cita que ha sido cancelada o está inactiva");}
     const existingAuth = await this.authRepo.findByAppointmentId(nuevaAuth.appointmentId);
     if (existingAuth) throw new ConflictError("Esta cita ya ha sido autorizada previamente");
     const user = await this.userRepo.findById(authorizedByUserId);
     if (!user) throw new NotFoundError("Usuario autorizador no encontrado");
-
     const enEsperaStatusId = await this.appointmentRepo.findStatusByCode('EN_ESPERA');
-    if (!enEsperaStatusId) {
-        throw new NotFoundError("El estado 'EN_ESPERA' no está configurado en el sistema");
-    }
+    if (!enEsperaStatusId) { throw new NotFoundError("El estado 'EN_ESPERA' no está configurado en el sistema");}
     const authCreada = await this.authRepo.create(nuevaAuth);
     await this.appointmentRepo.updateStatus(nuevaAuth.appointmentId, enEsperaStatusId);
 

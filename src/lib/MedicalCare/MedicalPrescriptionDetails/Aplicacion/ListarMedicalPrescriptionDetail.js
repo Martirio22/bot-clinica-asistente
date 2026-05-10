@@ -3,8 +3,8 @@ class ListarMedicalPrescriptionDetail {
     this.detailRepo = detailRepo;
   }
 
- async ejecutar() {
-    return await this.detailRepo.findAll(); 
+  async ejecutar(userIdFromToken) {
+    return await this.detailRepo.findAllByDoctor(userIdFromToken);
   }
 }
 

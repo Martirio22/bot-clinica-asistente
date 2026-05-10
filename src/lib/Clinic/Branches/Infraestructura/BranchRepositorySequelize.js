@@ -1,5 +1,6 @@
 const Branch = require("../Dominio/Entidades/Branch");
 const BranchModel = require("./BranchModel");
+const OfficeModel = require("../../Offices/Infraestructura/OfficeModel");
 
 class BranchRepositorySequelize {
 
@@ -46,6 +47,7 @@ class BranchRepositorySequelize {
 
   async findAll() {
     const branches = await BranchModel.findAll({
+      where: { isActive: true },
       order: [["createdAt", "DESC"]]
     });
 

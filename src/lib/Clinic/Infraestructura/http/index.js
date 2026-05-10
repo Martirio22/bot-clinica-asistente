@@ -15,6 +15,7 @@ const EliminarBranch = require("../../Branches/Aplicacion/EliminarBranch");
 const CrearOffice = require("../../Offices/Aplicacion/CrearOffice");
 const ListarOffice = require("../../Offices/Aplicacion/ListarOffice");
 const ObtenerOfficePorId = require("../../Offices/Aplicacion/ObtenerOfficePorId");
+const ListarOfficesPorBranch = require("../../Offices/Aplicacion/ListarOfficesPorBranch");
 const ActualizarOffice = require("../../Offices/Aplicacion/ActualizarOffice");
 const EliminarOffice = require("../../Offices/Aplicacion/EliminarOffice");
 
@@ -27,6 +28,7 @@ const EliminarSpecialty = require("../../Specialties/Aplicacion/EliminarSpecialt
 const CrearDoctor = require("../../Doctors/Aplicacion/CrearDoctor");
 const ListarDoctor = require("../../Doctors/Aplicacion/ListarDoctor");
 const ObtenerDoctor = require("../../Doctors/Aplicacion/ObtenerDoctorPorId");
+const ListarDoctorsPorSpecialty = require("../../Doctors/Aplicacion/ListarDoctorsPorSpecialty");
 const ActualizarDoctor = require("../../Doctors/Aplicacion/ActualizarDoctor");
 const EliminarDoctor = require("../../Doctors/Aplicacion/EliminarDoctor");
 
@@ -78,6 +80,7 @@ module.exports = function registerClinicModule(app) {
   crear: new CrearOffice(officeRepository, branchRepository),
   listar: new ListarOffice(officeRepository),
   obtener: new ObtenerOfficePorId(officeRepository),
+  listarPorBranch: new ListarOfficesPorBranch(officeRepository),
   actualizar: new ActualizarOffice(officeRepository),
   eliminar: new EliminarOffice(officeRepository)
 });
@@ -94,6 +97,7 @@ const doctorController = new DoctorController({
   crear: new CrearDoctor(doctorRepository, userRepository, specialtyRepository),
   listar: new ListarDoctor(doctorRepository),
   obtener: new ObtenerDoctor(doctorRepository),
+  listarPorSpecialty: new ListarDoctorsPorSpecialty(doctorRepository),
   actualizar: new ActualizarDoctor(doctorRepository, userRepository, specialtyRepository),
   eliminar: new EliminarDoctor(doctorRepository)
 });

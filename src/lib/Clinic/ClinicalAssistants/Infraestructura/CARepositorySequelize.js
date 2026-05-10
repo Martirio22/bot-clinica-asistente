@@ -31,7 +31,6 @@ class CARepositorySequelize {
   }
 
   async findById(id) {
-    //if (!id) return null;
     const assistant = await ClinicalAssistantModel.findByPk(id, {
       include: [{ model: SecurityUserModel, as: "user" }]
     });
@@ -42,6 +41,7 @@ class CARepositorySequelize {
   async findAll() {
     const assistant = await ClinicalAssistantModel.findAll({
       include: [{ model: SecurityUserModel, as: "user" }],
+      where: { isActive: true },
       order: [["createdAt", "DESC"]]
     });
 

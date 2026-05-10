@@ -51,6 +51,7 @@ class ScheduleBlockRepositorySequelize {
         { model: ScheduleBlockTypeModel, as: "blockingType" },
         { model: UserModel, as: "user" }
       ],
+      where: { isActive: true },
       order: [["startDate", "DESC"]]
     });
     return data.map(b => this.toDomain(b));
@@ -61,18 +62,13 @@ class ScheduleBlockRepositorySequelize {
     return await this.findById(id);
   }
   
-  async findOverlap(doctorId, startDate, endDate) {
-    return await ScheduleBlockModel.findOne({
-      where: {
-        doctorId,
-        isActive: true,
-        [Op.and]: [
-          { startDate: { [Op.lt]: endDate } },
-          { endDate: { [Op.gt]: startDate } }
-        ]
-      }
-    });
-  }
+async findOverlap(doctorId, startDate, endDate, excludeId = null) {
+  const whereCondition = { doctorId, isActive: true,
+    [Op.or]: [ {startDate: { [Op.lt]: endDate }, endDate: { [Op.gt]: startDate }}]
+  };
+  if (excludeId) { whereCondition.id = { [Op.ne]: excludeId };}
+  return await ScheduleBlockModel.findOne({ where: whereCondition });
+}
 
   async softDelete(id) {
     await ScheduleBlockModel.update({ isActive: false }, { where: { id } });

@@ -10,6 +10,7 @@ module.exports = (controller) => {
   router.post("/", asyncHandler(controller.crear));
   router.get("/", asyncHandler(controller.listar));
   router.get("/:id", asyncHandler(controller.obtener));
+  router.get("/branch/:branchId", asyncHandler(controller.listarPorBranch));
   router.put("/:id", asyncHandler(controller.actualizar));
   router.delete("/:id", asyncHandler(controller.eliminar));
 

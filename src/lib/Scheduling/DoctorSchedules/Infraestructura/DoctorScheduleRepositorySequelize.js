@@ -28,6 +28,7 @@ class DoctorScheduleRepositorySequelize {
         { model: BranchModel, as: "branch" },
         { model: OfficeModel, as: "office" }
       ],
+      where: { isActive: true },
       order: [["dayOfWeek", "ASC"], ["startTime", "ASC"]]
     });
 
@@ -46,12 +47,18 @@ class DoctorScheduleRepositorySequelize {
   }
 
   async findAllByDoctor(doctorId) {
-    const schedules = await DoctorScheduleModel.findAll({
-      where: { doctorId, isActive: true },
-      order: [["dayOfWeek", "ASC"], ["startTime", "ASC"]]
-    });
-    return schedules.map(s => this.toDomain(s));
-  }
+  const schedules = await DoctorScheduleModel.findAll({
+    where: { doctorId,  isActive: true  },
+    include: [
+      { model: DoctorModel, as: "doctor" },
+      { model: BranchModel, as: "branch" },
+      { model: OfficeModel, as: "office" }
+    ],
+    order: [["dayOfWeek", "ASC"], ["startTime", "ASC"]]
+  });
+  
+  return schedules.map(s => this.toDomain(s));
+}
 
 async findSchedule(doctorId, dayOfWeek, startDate, endDate) {
   const startTime = new Date(startDate).toTimeString().split(' ')[0];
@@ -77,21 +84,20 @@ async findSchedule(doctorId, dayOfWeek, startDate, endDate) {
     await DoctorScheduleModel.update({ isActive: false }, { where: { id } });
   }
 
-  async findCollidingSchedule(doctorId, dayOfWeek, startTime, endTime) {
-  
-  return await DoctorScheduleModel.findOne({
-    where: {
-      doctorId,
-      dayOfWeek,
-      isActive: true,
-      [Op.or]: [
-        {
-          startTime: { [Op.lt]: endTime },
-          endTime: { [Op.gt]: startTime }
-        }
-      ]
-    }
-  });
+async findOfficeOverlap(officeId, dayOfWeek, startTime, endTime, excludeId = null) {
+  const whereCondition = {officeId, dayOfWeek,isActive: true,
+    [Op.or]: [{startTime: { [Op.lt]: endTime }, endTime: { [Op.gt]: startTime }}]
+  };
+  if (excludeId) {whereCondition.id = { [Op.ne]: excludeId };}
+  return await DoctorScheduleModel.findOne({ where: whereCondition });
+}
+
+async findCollidingSchedule(doctorId, dayOfWeek, startTime, endTime, excludeId = null) {
+  const whereCondition = {doctorId, dayOfWeek, isActive: true,
+    [Op.or]: [ { startTime: { [Op.lt]: endTime }, endTime: { [Op.gt]: startTime } }]
+  };
+  if (excludeId) { whereCondition.id = { [Op.ne]: excludeId };}
+  return await DoctorScheduleModel.findOne({ where: whereCondition });
 }
 }
 

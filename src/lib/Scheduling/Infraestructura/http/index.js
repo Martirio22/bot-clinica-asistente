@@ -38,7 +38,7 @@ const EliminarScheduleBlock = require("../../DoctorScheduleBlocks/Aplicacion/Eli
 const CrearAppointment = require("../../Appointments/Aplicacion/CrearAppointment");
 const ListarAppointment = require("../../Appointments/Aplicacion/ListarAppointment");
 const ObtenerAppointmentPorId = require("../../Appointments/Aplicacion/ObtenerAppointmentPorId");
-const ObtenerDisponibilidadPorMedico = require("../../Appointments/Aplicacion/ObtenerDisponibilidadPorMedico");
+const ObtenerDisponibilidadMedico = require("../../Appointments/Aplicacion/ObtenerDisponibilidadPorMedico");
 const ActualizarAppointment = require("../../Appointments/Aplicacion/ActualizarAppointment");
 const EliminarAppointment = require("../../Appointments/Aplicacion/EliminarAppointment");
 
@@ -111,13 +111,14 @@ const scheduleBlockController = new ScheduleBlockController({
 });
 
 const appointmentController = new AppointmentController({
-        crear: new CrearAppointment(appointmentRepository, doctorRepository, patientRepository, doctorScheduleRepository, blockRepository,
-          specialtyRepository, branchRepository, officeRepository, appointmentStatusRepository),
+        crear: new CrearAppointment({ appointment: appointmentRepository, doctor: doctorRepository,
+        patient: patientRepository, schedule: doctorScheduleRepository,blocking: blockRepository,
+        specialty: specialtyRepository, branch: branchRepository, office: officeRepository, status: appointmentStatusRepository }),
         listar: new ListarAppointment(appointmentRepository),
         obtener: new ObtenerAppointmentPorId(appointmentRepository),
-        actualizar: new ActualizarAppointment(appointmentRepository, doctorRepository),
+        actualizar: new ActualizarAppointment({appointment: appointmentRepository, doctor: doctorRepository, schedule: doctorScheduleRepository, blocking: blockRepository }),
         eliminar: new EliminarAppointment(appointmentRepository),
-        disponibilidad: new ObtenerDisponibilidadPorMedico( appointmentRepository, doctorScheduleRepository, blockRepository, doctorRepository )
+        disponibilidad: new ObtenerDisponibilidadMedico( appointmentRepository, doctorScheduleRepository, blockRepository, doctorRepository )
     });
 
     const attendanceController = new AttendanceAuthorizationController({

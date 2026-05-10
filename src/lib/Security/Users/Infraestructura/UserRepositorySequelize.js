@@ -53,5 +53,14 @@ class UserRepositorySequelize {
     const users = await SecurityUserModel.findAll({ include: [{ model: RoleModel, as: "roles", through: { attributes: [] } }], order: [["createdAt", "DESC"]] });
     return users.map(u => this.toDomain(u));
   }
+  //se agrega
+  async findByRoleCode(roleCode) {
+  const users = await SecurityUserModel.findAll({
+    where: { isActive: true },
+    include: [ { model: RoleModel,  as: "roles", where: { code: roleCode }, through: { attributes: [] } } ]
+  });
+
+  return users.map(user => this.toDomain(user));
+}
 }
 module.exports = UserRepositorySequelize;

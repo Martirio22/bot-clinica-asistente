@@ -17,20 +17,17 @@ class MPDRepositorySequelize {
     return res ? this.toDomain(res) : null;
   }
 
-  async findByPrescriptionId(medicalPrescriptionId) {
-    const items = await MedicalPrescriptionDetailModel.findAll({
-      where: { medicalPrescriptionId, isActive: true },
-      order: [["order", "ASC"]]
-    });
-    return items.map(i => this.toDomain(i));
-  }
-
-  async findAll() {
-  const items = await MedicalPrescriptionDetailModel.findAll({
+async findAllByDoctor(userId) {
+  const data = await MedicalPrescriptionDetailModel.findAll({
     where: { isActive: true },
+    include: [{ association: "prescription", required: true,
+        include: [{ association: "medicalAttention", required: true,
+            include: [{ association: "doctor", where: { userId }, required: true}]
+          }]}],
     order: [["createdAt", "DESC"]]
   });
-  return items.map(i => this.toDomain(i));
+
+  return data.map(d => this.toDomain(d));
 }
 
   async update(id, data) {

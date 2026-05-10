@@ -11,6 +11,8 @@ const ListarSecurityUsers = require("../../Users/Aplicacion/ListarSecurityUsers"
 const ObtenerSecurityUserPorId = require("../../Users/Aplicacion/ObtenerSecurityUserPorId");
 const ActualizarSecurityUser = require("../../Users/Aplicacion/ActualizarSecurityUser");
 const EliminarSecurityUser = require("../../Users/Aplicacion/EliminarSecurityUser");
+//se agrega
+const ListarUsuariosPorRol = require("../../Users/Aplicacion/ListarUsuariosPorRol");
 
 const CrearRole = require("../../Roles/Aplicacion/CrearRole");
 const ListarRoles = require("../../Roles/Aplicacion/ListarRoles");
@@ -61,7 +63,9 @@ module.exports = function registerSecurityModule(app) {
     listar: new ListarSecurityUsers(userRepository),
     obtener: obtenerSecurityUserPorId,
     actualizar: new ActualizarSecurityUser(userRepository),
-    eliminar: new EliminarSecurityUser(userRepository)
+    eliminar: new EliminarSecurityUser(userRepository),
+    //se agrega
+    listarPorRol: new ListarUsuariosPorRol(userRepository)
   });
 
   const roleController = new RoleController({

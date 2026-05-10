@@ -33,6 +33,7 @@ class AtSRepositorySequelize {
 
   async findAll() {
     const ats = await AttentionStatusModel.findAll({
+      where: { isActive: true },
       order: [["createdAt", "DESC"]]
     });
 

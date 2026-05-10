@@ -32,6 +32,7 @@ class MARepositorySequelize {
     include: ["patient", "status",
       {association: "doctor", where: { userId: userId }}
     ],
+    where: { isActive: true },
     order: [['startDate', 'DESC']]
   });
   

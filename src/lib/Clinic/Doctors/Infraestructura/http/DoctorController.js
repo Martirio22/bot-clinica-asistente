@@ -1,8 +1,9 @@
 class DoctorController {
-  constructor({ crear, listar, obtener, actualizar, eliminar }) {
+  constructor({ crear, listar, obtener, listarPorSpecialty, actualizar, eliminar }) {
     this.crearUseCase = crear;
     this.listarUseCase = listar;
     this.obtenerUseCase = obtener;
+    this.listarPorSpecialtyUseCase = listarPorSpecialty;
     this.actualizarUseCase = actualizar;
     this.eliminarUseCase = eliminar;
   }
@@ -37,6 +38,12 @@ class DoctorController {
   eliminar = async (req, res) => {
     await this.eliminarUseCase.ejecutar(req.params.id);
     res.json({ success: true, message: "Médico desactivado" });
+  };
+
+  listarPorSpecialty = async (req, res) => {
+    const { specialtyId } = req.params;
+    const data = await this.listarPorSpecialtyUseCase.ejecutar(specialtyId);
+    res.json({ success: true, data });
   };
 }
 

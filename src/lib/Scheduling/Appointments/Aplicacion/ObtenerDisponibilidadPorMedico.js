@@ -8,65 +8,50 @@ class ObtenerDisponibilidadMedico {
 
   async ejecutar(doctorId, fecha) {
     const doctor = await this.doctorRepo.findById(doctorId);
-    if (!doctor) throw new Error("Doctor no encontrado");
-    
-    const duracionCita = doctor.appointmentDurationMinutes;
+    if (!doctor) throw new Error("Médico no encontrado");
 
-    const diaSemana = new Date(`${fecha}T00:00:00`).getDay(); 
-
-    const horariosBase = await this.scheduleRepo.findAllByDoctor(doctorId);
-    const horarioHoy = horariosBase.find(h => h.dayOfWeek === diaSemana && h.isActive);
+    const diaSemana = new Date(`${fecha}T12:00:00`).getDay(); 
+    const horarios = await this.scheduleRepo.findAllByDoctor(doctorId);
+    const horarioHoy = horarios.find(h => h.dayOfWeek === diaSemana && h.isActive);
 
     if (!horarioHoy) return { doctorId, fecha, slots: [] };
 
-    const citasOcupadas = await this.appointmentRepo.findAll({ doctorId, date: fecha });
-    const bloqueos = await this.blockingRepo.findAll({ doctorId, date: fecha });
+    const [citas, bloqueos] = await Promise.all([
+      this.appointmentRepo.findAll({ doctorId, date: fecha }),
+      this.blockingRepo.findAll({ doctorId, date: fecha })
+    ]);
 
-    let slotsDisponibles = [];
+    const slots = [];
+    const duracionMs = doctor.appointmentDurationMinutes * 60000;
     
-    let currentPointer = new Date(`${fecha}T${horarioHoy.startTime}-05:00`);
-    const limitPointer = new Date(`${fecha}T${horarioHoy.endTime}-05:00`);
+    let current = new Date(`${fecha}T${horarioHoy.startTime}-05:00`);
+    const end = new Date(`${fecha}T${horarioHoy.endTime}-05:00`);
 
-    while (new Date(currentPointer.getTime() + duracionCita * 60000) <= limitPointer) {
-      const slotInicio = new Date(currentPointer);
-      const slotFin = new Date(currentPointer.getTime() + duracionCita * 60000);
+    while (current.getTime() + duracionMs <= end.getTime()) {
+      const slotInicio = current.getTime();
+      const slotFin = current.getTime() + duracionMs;
 
-      const estaOcupado = this._revisarColision(slotInicio, slotFin, citasOcupadas, bloqueos);
-
-      if (!estaOcupado) {
-        slotsDisponibles.push({
-
-          inicio: slotInicio.toLocaleString('sv-SE', { timeZone: 'America/Guayaquil' }),
-          fin: slotFin.toLocaleString('sv-SE', { timeZone: 'America/Guayaquil' })
+      if (!this._hayConflicto(slotInicio, slotFin, citas, bloqueos)) {
+        slots.push({
+          inicio: new Date(slotInicio).toLocaleString('sv-SE', { timeZone: 'America/Guayaquil' }),
+          fin: new Date(slotFin).toLocaleString('sv-SE', { timeZone: 'America/Guayaquil' })
         });
-      }   
-      currentPointer.setMinutes(currentPointer.getMinutes() + duracionCita);
+      }
+
+      current = new Date(current.getTime() + duracionMs);
     }
 
-    return {
-      doctorId,
-      fecha,
-      duracionCita,
-      sucursal: horarioHoy.branchId,
-      slots: slotsDisponibles
-    };
+    return {doctorId, fecha, duracionCita: doctor.appointmentDurationMinutes, sucursalId: horarioHoy.branchId, consultorioId: horarioHoy.officeId, slots };
   }
 
-  _revisarColision(inicio, fin, citas, bloqueos) {
-    const ini = inicio.getTime();
-    const f = fin.getTime();
-    const choqueCita = citas.some(c => {
-      const cIni = new Date(c.startDate).getTime();
-      const cFin = new Date(c.endDate).getTime();
-      return (ini < cFin && f > cIni);
-    });
+  _hayConflicto(slotIniMs, slotFinMs, citas, bloqueos) {
+    const revisar = (r) => {
+      const rIni = new Date(r.startDate).getTime();
+      const rFin = new Date(r.endDate).getTime();
+      return (slotIniMs < rFin && slotFinMs > rIni);
+    };
 
-    const choqueBloqueo = bloqueos.some(b => {
-      const bIni = new Date(b.startDate).getTime();
-      const bFin = new Date(b.endDate).getTime();
-      return (ini < bFin && f > bIni);
-    });
-    return choqueCita || choqueBloqueo;
+    return citas.some(revisar) || bloqueos.some(revisar);
   }
 }
 

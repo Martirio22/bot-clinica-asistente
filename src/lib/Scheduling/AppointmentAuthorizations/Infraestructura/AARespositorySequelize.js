@@ -35,11 +35,12 @@ class AARepositorySequelize {
 
   async findAll(filters = {}) {
     const data = await AttendanceAuthorizationModel.findAll({
-      where: filters,
+      where: {...filters, isActive: true},
       include: [
         { model: AppointmentModel, as: "appointment" },
         { model: UserModel, as: "authorizedByUser" }
-      ]
+      ],
+    order: [["createdAt", "DESC"]]
     });
     return data.map(d => this.toDomain(d));
   }

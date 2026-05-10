@@ -1,40 +1,47 @@
 const NotFoundError = require("../../../../shared/errors/NotFoundError");
+const ConflictError = require("../../../../shared/errors/ConflictError");
 
 class ActualizarAppointment {
-  constructor(appointmentRepo, doctorRepo) {
-    this.appointmentRepo = appointmentRepo;
-    this.doctorRepo = doctorRepo;
+  constructor(repos) {
+    this.repos = repos;
   }
 
   async ejecutar(id, data) {
-    const appointment = await this.appointmentRepo.findById(id);
+    const appointment = await this.repos.appointment.findById(id);
     if (!appointment) throw new NotFoundError("Cita no encontrada");
 
-    const doctor = await this.doctorRepo.findById(appointment.doctorId);
-    const duracion = doctor.appointmentDurationMinutes;
-
-    const startStr = data.startDate || appointment.startDate;
-    const newStart = new Date(startStr);
-    const newEnd = new Date(newStart.getTime() + duracion * 60000);
-
-    const formatToEcuadorISO = (date) => {
-      const pad = (n) => n.toString().padStart(2, '0');
-      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}-05:00`;
-    };
+    const doctor = await this.repos.doctor.findById(appointment.doctorId);
+    const startDate = new Date(data.startDate || appointment.startDate);
+    const endDate = new Date(startDate.getTime() + doctor.appointmentDurationMinutes * 60000);
 
     const updateData = {
-      startDate: startStr.includes('-05:00') ? startStr : formatToEcuadorISO(newStart),
-      endDate: formatToEcuadorISO(newEnd),
-      statusId: data.statusId ?? appointment.statusId,
-      reason: data.reason ?? appointment.reason,
-      observation: data.observation ?? appointment.observation,
-      officeId: data.officeId ?? appointment.officeId,
-      isActive: data.isActive ?? appointment.isActive
+      ...data,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      branchId: appointment.branchId,
+      officeId: appointment.officeId
     };
 
-    await this.appointmentRepo.update(id, updateData);
-    
-    return await this.appointmentRepo.findById(id);
+    if (data.startDate && data.startDate !== appointment.startDate) {
+      const horario = await this.repos.schedule.findSchedule(
+        doctor.id, startDate.getDay(), updateData.startDate, updateData.endDate
+      );
+      if (!horario) throw new ConflictError("El médico no atiende en este nuevo horario seleccionado");
+      updateData.branchId = horario.branchId;
+      updateData.officeId = horario.officeId;
+    }
+
+    await this._validarConflictos(id, appointment.doctorId, updateData);
+    return await this.repos.appointment.update(id, updateData);
+  }
+
+  async _validarConflictos(id, doctorId, data) {
+    const [bloqueo, solapada] = await Promise.all([
+      this.repos.blocking.findOverlap(doctorId, data.startDate, data.endDate),
+      this.repos.appointment.findOverlap(doctorId, data.startDate, data.endDate, id)
+    ]);
+    if (bloqueo) throw new ConflictError("El médico tiene un bloqueo en esa fecha");
+    if (solapada) throw new ConflictError("El nuevo horario ya está ocupado por otra cita");
   }
 }
 

@@ -9,5 +9,8 @@ module.exports = (controller) => {
   router.get("/:id", asyncHandler(controller.obtener));
   router.put("/:id", asyncHandler(controller.actualizar));
   router.delete("/:id", asyncHandler(controller.eliminar));
+  //se agrega
+  router.get("/role/medicos", asyncHandler(controller.listarMedicosDisponibles));
+  router.get("/role/asistentes", asyncHandler(controller.listarAsistentesDisponibles));
   return router;
 };
