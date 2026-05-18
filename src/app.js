@@ -5,6 +5,7 @@ const registerChatBotModule = require("./lib/ChatBot/Infraestructura/http");
 const registerClinicModule = require("./lib/Clinic/Infraestructura/http");
 const registerSchedulingModule = require("./lib/Scheduling/Infraestructura/http");
 const registerMedicalCareModule = require("./lib/MedicalCare/Infraestructura/http");
+const registerChatBotSqlModule = require("./lib/ChatBotSql/Infraestructura/http");
 const errorHandler = require("./shared/middlewares/errorHandler");
 
 function buildApp() {
@@ -24,6 +25,7 @@ function buildApp() {
   registerClinicModule(app);     // branches, doctors, offices, patients, specialties, assistants
   registerSchedulingModule(app); // appointments, schedule, authorizations, status
   registerMedicalCareModule(app);
+  registerChatBotSqlModule(app);
 
   app.use((req, res) =>
     res.status(404).json({ success: false, message: "Ruta no encontrada" })

@@ -33,6 +33,8 @@ require("../../lib/MedicalCare/MedicalAttentions/Infraestructura/MedicalAttentio
 require("../../lib/MedicalCare/MedicalPrescriptions/Infraestructura/MedicalPrescriptionModel");
 require("../../lib/MedicalCare/MedicalPrescriptionDetails/Infraestructura/MedicalPrescriptionDetailModel");
 
+require("../../lib/ChatBotSql/WhatsAppLines/Infraestructura/WhatsappLineModel");
+
 async function syncPostgres() {
   setupSecurityAssociations();
   setupClinicAssociations();
@@ -42,6 +44,7 @@ async function syncPostgres() {
   await sequelize.createSchema("clinic").catch(() => {});
   await sequelize.createSchema("scheduling").catch(() => {});
   await sequelize.createSchema("medicalcare").catch(() => {});
+  await sequelize.createSchema("chatbot").catch(() => {});
   await sequelize.sync({
     alter: process.env.DB_SYNC_ALTER === "true",
     force: process.env.DB_SYNC_FORCE === "true"
