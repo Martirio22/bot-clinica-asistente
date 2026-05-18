@@ -3,10 +3,12 @@ const setupSecurityAssociations = require("../../lib/Security/Infraestructura/as
 const setupClinicAssociations = require("../../lib/Clinic/Infraestructura/associations");
 const setupSchedulingAssociations = require("../../lib/Scheduling/Infraestructura/associations");
 const setupMedicalCareAssociations = require("../../lib/MedicalCare/Infraestructura/associations");
+const setupChatBotAssociations = require("../../lib/ChatBotSql/Infraestructura/associations");
 const seedSecurity = require("../../lib/Security/Infraestructura/securitySeeder");
 const seedScheduling = require("../../lib/Scheduling/Infraestructura/schedulingSeeder");
 const seedClinic = require("../../lib/Clinic/Infraestructura/clinicSeeder");
 const seedMedicalCare = require("../../lib/MedicalCare/Infraestructura/medicalCareSeeder");
+const seedBotMenus = require("../../lib/ChatBotSql/Infraestructura/chatbotSeeder");
 
 // Importar modelos para que Sequelize los registre
 require("../../lib/Security/Users/Infraestructura/UserModel");
@@ -34,12 +36,18 @@ require("../../lib/MedicalCare/MedicalPrescriptions/Infraestructura/MedicalPresc
 require("../../lib/MedicalCare/MedicalPrescriptionDetails/Infraestructura/MedicalPrescriptionDetailModel");
 
 require("../../lib/ChatBotSql/WhatsAppLines/Infraestructura/WhatsappLineModel");
+require("../../lib/ChatBotSql/BotMenus/Infraestructura/BotMenuModel");
+require("../../lib/ChatBotSql/BotMenuOptions/Infraestructura/BotMenuOptionModel");
+require("../../lib/ChatBotSql/ChatSessionStatus/Infraestructura/ChatSessionStatusModel");
+require("../../lib/ChatBotSql/MessageTypes/Infraestructura/MessageTypeModel");
+require("../../lib/ChatBotSql/BotIntents/Infraestructura/BotIntentModel");
 
 async function syncPostgres() {
   setupSecurityAssociations();
   setupClinicAssociations();
   setupSchedulingAssociations();
   setupMedicalCareAssociations();
+  setupChatBotAssociations();
   await sequelize.createSchema("security").catch(() => {});
   await sequelize.createSchema("clinic").catch(() => {});
   await sequelize.createSchema("scheduling").catch(() => {});
@@ -54,5 +62,6 @@ async function syncPostgres() {
   if (process.env.SEED_SCHEDULING === "true") await seedScheduling();
   if (process.env.SEED_CLINIC === "true") await seedClinic();
   if (process.env.SEED_MEDICALCARE === "true") await seedMedicalCare();
+  if (process.env.SEED_MEDICALCARE === "true") await seedBotMenus();
 }
 module.exports = syncPostgres;
