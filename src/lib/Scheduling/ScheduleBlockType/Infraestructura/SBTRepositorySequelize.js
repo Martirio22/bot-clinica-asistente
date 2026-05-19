@@ -33,7 +33,6 @@ class SBTRepositorySequelize {
 
   async findAll() {
     const sbt = await ScheduleBlockTypeModel.findAll({
-      where: { isActive: true },
       order: [["createdAt", "DESC"]]
     });
 

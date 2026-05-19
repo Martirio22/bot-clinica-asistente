@@ -35,7 +35,7 @@ class AARepositorySequelize {
 
   async findAll(filters = {}) {
     const data = await AttendanceAuthorizationModel.findAll({
-      where: {...filters, isActive: true},
+      where: {...filters},
       include: [
         { model: AppointmentModel, as: "appointment" },
         { model: UserModel, as: "authorizedByUser" }

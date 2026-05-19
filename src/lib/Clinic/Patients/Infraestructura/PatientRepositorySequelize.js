@@ -41,7 +41,6 @@ class PatientRepositorySequelize {
 
   async findAll() {
     const patients = await PatientModel.findAll({
-      where: { isActive: true },
       order: [["createdAt", "DESC"]]
     });
     return patients.map(p => this.toDomain(p));

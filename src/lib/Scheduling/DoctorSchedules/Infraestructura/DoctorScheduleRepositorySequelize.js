@@ -28,10 +28,8 @@ class DoctorScheduleRepositorySequelize {
         { model: BranchModel, as: "branch" },
         { model: OfficeModel, as: "office" }
       ],
-      where: { isActive: true },
       order: [["dayOfWeek", "ASC"], ["startTime", "ASC"]]
     });
-
     return schedules.map(s => this.toDomain(s));
   }
 
@@ -48,7 +46,7 @@ class DoctorScheduleRepositorySequelize {
 
   async findAllByDoctor(doctorId) {
   const schedules = await DoctorScheduleModel.findAll({
-    where: { doctorId,  isActive: true  },
+    where: { doctorId },
     include: [
       { model: DoctorModel, as: "doctor" },
       { model: BranchModel, as: "branch" },

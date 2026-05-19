@@ -33,7 +33,6 @@ class AtSRepositorySequelize {
 
   async findAll() {
     const ats = await AttentionStatusModel.findAll({
-      where: { isActive: true },
       order: [["createdAt", "DESC"]]
     });
 
@@ -46,10 +45,7 @@ class AtSRepositorySequelize {
   }
 
   async softDelete(id) {
-    await AttentionStatusModel.update(
-      { isActive: false },
-      { where: { id } }
-    );
+    await AttentionStatusModel.update( { isActive: false }, { where: { id } } );
   }
 
   async findByCode(code) {

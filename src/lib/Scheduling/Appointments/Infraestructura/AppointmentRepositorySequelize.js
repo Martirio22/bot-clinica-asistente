@@ -62,9 +62,10 @@ class AppointmentRepositorySequelize {
   }
 
   async findAll(filters = {}) {
-    const { doctorId, patientId, date, statusId } = filters;
-    const where = { isActive: true };
+    const { doctorId, patientId, date, statusId, isActive } = filters;
+    const where = {};
 
+    if (isActive !== undefined) where.isActive = isActive;
     if (doctorId) where.doctorId = doctorId;
     if (patientId) where.patientId = patientId;
     if (statusId) where.statusId = statusId;

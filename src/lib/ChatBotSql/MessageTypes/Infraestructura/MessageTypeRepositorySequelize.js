@@ -30,7 +30,6 @@ class MessageTypeRepositorySequelize {
 
   async findAll() {
     const types = await MessageTypeModel.findAll({
-      where: { isActive: true }
     });
     return types.map(t => this.toDomain(t));
   }

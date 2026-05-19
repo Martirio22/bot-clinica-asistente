@@ -19,7 +19,6 @@ class MPDRepositorySequelize {
 
 async findAllByDoctor(userId) {
   const data = await MedicalPrescriptionDetailModel.findAll({
-    where: { isActive: true },
     include: [{ association: "prescription", required: true,
         include: [{ association: "medicalAttention", required: true,
             include: [{ association: "doctor", where: { userId }, required: true}]

@@ -32,7 +32,6 @@ class BotMenuRepositorySequelize {
 
   async findAll() {
     const menus = await BotMenuModel.findAll({
-      where: { isActive: true }
     });
     return menus.map(m => this.toDomain(m));
   }
@@ -55,7 +54,7 @@ class BotMenuRepositorySequelize {
 
   async findMainMenu() {
     const menu = await BotMenuModel.findOne({
-      where: { isMainMenu: true, isActive: true }
+      where: { isMainMenu: true }
     });
     return menu ? this.toDomain(menu) : null;
   }

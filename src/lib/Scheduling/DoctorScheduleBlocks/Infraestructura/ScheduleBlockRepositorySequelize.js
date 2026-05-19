@@ -34,7 +34,7 @@ class ScheduleBlockRepositorySequelize {
 
   async findAllByDoctor(doctorId) {
     const data = await ScheduleBlockModel.findAll({
-      where: { doctorId, isActive: true },
+      where: { doctorId },
       include: [{ model: ScheduleBlockTypeModel, as: "blockingType" },
         { model: UserModel, as: "user" }
       ],
@@ -45,7 +45,6 @@ class ScheduleBlockRepositorySequelize {
 
   async findAll() {
     const data = await ScheduleBlockModel.findAll({
-      where: { isActive: true },
       include: [
         { model: DoctorModel, as: "doctor" },
         { model: ScheduleBlockTypeModel, as: "blockingType" },

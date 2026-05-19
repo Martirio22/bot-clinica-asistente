@@ -33,7 +33,6 @@ class ASRepositorySequelize {
 
   async findAll() {
     const as = await AppointmentStatusModel.findAll({
-      where: { isActive: true },
       order: [["createdAt", "DESC"]]
     });
 

@@ -50,7 +50,6 @@ class DoctorRepositorySequelize {
     const doctors = await DoctorModel.findAll({
       include: [{ model: SecurityUserModel, as: "user" }, { model: SpecialtyModel, as: "specialty" }
       ],
-      where: { isActive: true },
       order: [["createdAt", "DESC"]]
     });
 
@@ -67,7 +66,7 @@ class DoctorRepositorySequelize {
 
   async findBySpecialty(specialtyId) {
   const doctors = await DoctorModel.findAll({
-    where: { specialtyId,  isActive: true },
+    where: { specialtyId },
     include: [
       { model: SecurityUserModel, as: "user" },
       { model: SpecialtyModel, as: "specialty" }

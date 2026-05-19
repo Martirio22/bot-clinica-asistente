@@ -43,15 +43,15 @@ class BMORepositorySequelize {
 
   async findAllByMenu(menuBotId) {
     const data = await BotMenuOptionModel.findAll({
-      where: { menuBotId, isActive: true },
-      order: [["order", "ASC"]]
+      where: { menuBotId },
+      order: [["order", "DESC"]]
     });
     return data.map(d => this.toDomain(d));
   }
 
   async findByMenuAndCode(menuBotId, code) {
     const data = await BotMenuOptionModel.findOne({
-      where: { menuBotId, code, isActive: true }
+      where: { menuBotId, code }
     });
     return data ? this.toDomain(data) : null;
   }

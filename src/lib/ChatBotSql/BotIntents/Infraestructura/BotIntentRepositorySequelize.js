@@ -30,7 +30,6 @@ class BotIntentRepositorySequelize {
 
   async findAll() {
     const intents = await BotIntentModel.findAll({
-      where: { isActive: true }
     });
     return intents.map(i => this.toDomain(i));
   }

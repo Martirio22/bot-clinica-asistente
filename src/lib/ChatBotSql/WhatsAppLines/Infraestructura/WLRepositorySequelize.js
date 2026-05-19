@@ -43,7 +43,6 @@ class WLRepositorySequelize {
 
   async findAll() {
     const lines = await WhatsappLineModel.findAll({
-      where: { isActive: true }
     });
     return lines.map(l => this.toDomain(l));
   }

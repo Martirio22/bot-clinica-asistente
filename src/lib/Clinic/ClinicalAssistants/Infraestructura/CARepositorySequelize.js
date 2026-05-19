@@ -41,7 +41,6 @@ class CARepositorySequelize {
   async findAll() {
     const assistant = await ClinicalAssistantModel.findAll({
       include: [{ model: SecurityUserModel, as: "user" }],
-      where: { isActive: true },
       order: [["createdAt", "DESC"]]
     });
 

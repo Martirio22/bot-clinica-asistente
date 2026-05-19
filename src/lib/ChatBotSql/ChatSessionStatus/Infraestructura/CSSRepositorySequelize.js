@@ -30,7 +30,6 @@ class CSSRepositorySequelize {
 
   async findAll() {
     const statuses = await ChatSessionStatusModel.findAll({
-      where: { isActive: true },
       order: [["createdAt", "DESC"]]
     });
     return statuses.map(s => this.toDomain(s));
