@@ -47,7 +47,6 @@ class BranchRepositorySequelize {
 
   async findAll() {
     const branches = await BranchModel.findAll({
-      where: { isActive: true },
       order: [["createdAt", "DESC"]]
     });
 
