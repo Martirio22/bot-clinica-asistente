@@ -17,50 +17,110 @@ class UserRepositorySequelize {
       roles: plain.roles || []
     });
   }
+
+  getRolesInclude() {
+    return [
+      {
+        model: RoleModel,
+        as: "roles",
+        through: {
+          attributes: [],
+          where: { isActive: true }
+        }
+      }
+    ];
+  }
+
   async create(user) {
     const created = await SecurityUserModel.create({
-      firstName: user.firstName, lastName: user.lastName, email: user.email,
-      username: user.username, passwordHash: user.passwordHash, phone: user.phone,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      username: user.username,
+      passwordHash: user.passwordHash,
+      phone: user.phone,
       isActive: user.isActive
     });
+
     return this.toDomain(created);
   }
+
   async update(id, data) {
     await SecurityUserModel.update(data, { where: { id } });
     return await this.findById(id);
   }
+
   async softDelete(id) {
     await SecurityUserModel.update({ isActive: false }, { where: { id } });
   }
+
   async findById(id) {
-    const user = await SecurityUserModel.findByPk(id, { include: [{ model: RoleModel, as: "roles", through: { attributes: [] } }] });
+    const user = await SecurityUserModel.findByPk(id, {
+      include: this.getRolesInclude()
+    });
+
     return user ? this.toDomain(user) : null;
   }
+
   async findByUsernameOrEmail(value) {
     const { Op } = require("sequelize");
-    const user = await SecurityUserModel.findOne({ where: { [Op.or]: [{ username: value }, { email: value }] }, include: [{ model: RoleModel, as: "roles", through: { attributes: [] } }] });
+
+    const user = await SecurityUserModel.findOne({
+      where: {
+        [Op.or]: [
+          { username: value },
+          { email: value }
+        ]
+      },
+      include: this.getRolesInclude()
+    });
+
     return user ? this.toDomain(user) : null;
   }
+
   async findByEmail(email) {
-    const user = await SecurityUserModel.findOne({ where: { email } });
+    const user = await SecurityUserModel.findOne({
+      where: { email }
+    });
+
     return user ? this.toDomain(user) : null;
   }
+
   async findByUsername(username) {
-    const user = await SecurityUserModel.findOne({ where: { username } });
+    const user = await SecurityUserModel.findOne({
+      where: { username }
+    });
+
     return user ? this.toDomain(user) : null;
   }
+
   async findAll() {
-    const users = await SecurityUserModel.findAll({ include: [{ model: RoleModel, as: "roles", through: { attributes: [] } }], order: [["createdAt", "DESC"]] });
+    const users = await SecurityUserModel.findAll({
+      include: this.getRolesInclude(),
+      order: [["createdAt", "DESC"]]
+    });
+
     return users.map(u => this.toDomain(u));
   }
-  //se agrega
-  async findByRoleCode(roleCode) {
-  const users = await SecurityUserModel.findAll({
-    where: { isActive: true },
-    include: [ { model: RoleModel,  as: "roles", where: { code: roleCode }, through: { attributes: [] } } ]
-  });
 
-  return users.map(user => this.toDomain(user));
+  async findByRoleCode(roleCode) {
+    const users = await SecurityUserModel.findAll({
+      where: { isActive: true },
+      include: [
+        {
+          model: RoleModel,
+          as: "roles",
+          where: { code: roleCode },
+          through: {
+            attributes: [],
+            where: { isActive: true }
+          }
+        }
+      ]
+    });
+
+    return users.map(user => this.toDomain(user));
+  }
 }
-}
+
 module.exports = UserRepositorySequelize;
