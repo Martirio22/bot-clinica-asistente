@@ -50,7 +50,6 @@ class ScheduleBlockRepositorySequelize {
         { model: ScheduleBlockTypeModel, as: "blockingType" },
         { model: UserModel, as: "user" }
       ],
-      where: { isActive: true },
       order: [["startDate", "DESC"]]
     });
     return data.map(b => this.toDomain(b));
