@@ -4,6 +4,7 @@ const BMORepositorySequelize = require("../../BotMenuOptions/Infraestructura/BMO
 const CSSRepositorySequelize = require("../../ChatSessionStatus/Infraestructura/CSSRepositorySequelize");
 const MessageTypeRepositorySequelize = require("../../MessageTypes/Infraestructura/MessageTypeRepositorySequelize");
 const BotIntentRepositorySequelize = require("../../BotIntents/Infraestructura/BotIntentRepositorySequelize");
+const ChatSessionsRepositorySequelize = require("../../ChatSessions/Infraestructura/ChatSessionRepositorySequelize");
 
 const CrearWhatsappLine = require("../../WhatsAppLines/Aplicacion/CrearWhatsappLine");
 const ListarWhatsappLine = require("../../WhatsAppLines/Aplicacion/ListarWhatsappLine");
@@ -45,6 +46,12 @@ const ActualizarBotIntent = require("../../BotIntents/Aplicacion/ActualizarBotIn
 const EliminarBotIntent = require("../../BotIntents/Aplicacion/EliminarBotIntent");
 const ObtenerBotIntentPorCode = require("../../BotIntents/Aplicacion/ObtenerBotIntentPorCode");
 
+const CrearChatSession = require("../../ChatSessions/Aplicacion/CrearChatSession");
+const ListarChatSessions = require("../../ChatSessions/Aplicacion/ListarChatSessions");
+const ObtenerChatSessionPorId = require("../../ChatSessions/Aplicacion/ObtenerChatSessionPorId");
+const AsignarAsistenteHumano = require("../../ChatSessions/Aplicacion/AsignarAsistenteHumano");
+const CerrarChatSession = require("../../ChatSessions/Aplicacion/CerrarChatSession");
+
 const WhatsappLineController = require("../../WhatsAppLines/Infraestructura/http/WhatsappLineController");
 const WhatsappLineRoutes = require("../../WhatsAppLines/Infraestructura/http/WhatsappLineRoutes");
 const BotMenuController = require("../../BotMenus/Infraestructura/http/BotMenuController");
@@ -57,6 +64,8 @@ const MessageTypeController = require("../../MessageTypes/Infraestructura/http/M
 const MessageTypeRoutes = require("../../MessageTypes/Infraestructura/http/MessageTypeRoutes");
 const BotIntentController = require("../../BotIntents/Infraestructura/http/BotIntentController");
 const BotIntentRoutes = require("../../BotIntents/Infraestructura/http/BotIntentRoutes");
+const ChatSessionController = require("../../ChatSessions/Infraestructura/http/ChatSessionController");
+const ChatSessionRoutes = require("../../ChatSessions/Infraestructura/http/ChatSessionRoutes");
 
 module.exports = function registerChatBotSqlModule(app) {
   const whatsappLineRepository = new WLRepositorySequelize();
@@ -65,6 +74,7 @@ module.exports = function registerChatBotSqlModule(app) {
   const chatSessionStatusRepository = new CSSRepositorySequelize();
   const messageTypeRepository = new MessageTypeRepositorySequelize();
   const botIntentRepository = new BotIntentRepositorySequelize();
+  const chatSessionRepository = new ChatSessionsRepositorySequelize();
 
   const whatsappLineController = new WhatsappLineController({
     crear: new CrearWhatsappLine(whatsappLineRepository),
@@ -118,10 +128,19 @@ module.exports = function registerChatBotSqlModule(app) {
     obtenerPorCodigo: new ObtenerBotIntentPorCode(botIntentRepository)
   });
 
+  const chatSessionController = new ChatSessionController({
+    crear: new CrearChatSession(chatSessionRepository),
+    listar: new ListarChatSessions(chatSessionRepository),
+    obtener: new ObtenerChatSessionPorId(chatSessionRepository),
+    asignarAsistente: new AsignarAsistenteHumano(chatSessionRepository),
+    cerrar: new CerrarChatSession(chatSessionRepository)
+  });
+
   app.use("/api/chatbotsql/whatsapp-lines", WhatsappLineRoutes(whatsappLineController));
   app.use("/api/chatbotsql/bot-menus", BotMenuRoutes(botMenuController));
   app.use("/api/chatbotsql/bot-menu-options", BotMenuOptionRoutes(botMenuOptionController));
   app.use("/api/chatbotsql/chat-session-statuses", ChatSessionStatusRoutes(chatSessionStatusController));
   app.use("/api/chatbotsql/message-types", MessageTypeRoutes(messageTypeController));
   app.use("/api/chatbotsql/bot-intents", BotIntentRoutes(botIntentController));
+  app.use("/api/chatbotsql/chat-sessions", ChatSessionRoutes(chatSessionController));
 };
