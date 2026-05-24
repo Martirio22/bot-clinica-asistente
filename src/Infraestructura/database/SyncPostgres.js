@@ -42,6 +42,7 @@ require("../../lib/ChatBotSql/ChatSessionStatus/Infraestructura/ChatSessionStatu
 require("../../lib/ChatBotSql/MessageTypes/Infraestructura/MessageTypeModel");
 require("../../lib/ChatBotSql/BotIntents/Infraestructura/BotIntentModel");
 require("../../lib/ChatBotSql/ChatSessions/Infraestructura/ChatSessionModel");
+require("../../lib/ChatBotSql/EventBotIA/Infraestructura/AiBotEventModel");
 
 async function syncPostgres() {
   setupSecurityAssociations();

@@ -5,6 +5,7 @@ const CSSRepositorySequelize = require("../../ChatSessionStatus/Infraestructura/
 const MessageTypeRepositorySequelize = require("../../MessageTypes/Infraestructura/MessageTypeRepositorySequelize");
 const BotIntentRepositorySequelize = require("../../BotIntents/Infraestructura/BotIntentRepositorySequelize");
 const ChatSessionsRepositorySequelize = require("../../ChatSessions/Infraestructura/ChatSessionRepositorySequelize");
+const AiBotEventRepositorySequelize = require("../../EventBotIA/Infraestructura/AiBotEventRepositorySequelize");
 
 const CrearWhatsappLine = require("../../WhatsAppLines/Aplicacion/CrearWhatsappLine");
 const ListarWhatsappLine = require("../../WhatsAppLines/Aplicacion/ListarWhatsappLine");
@@ -52,6 +53,12 @@ const ObtenerChatSessionPorId = require("../../ChatSessions/Aplicacion/ObtenerCh
 const AsignarAsistenteHumano = require("../../ChatSessions/Aplicacion/AsignarAsistenteHumano");
 const CerrarChatSession = require("../../ChatSessions/Aplicacion/CerrarChatSession");
 
+const CrearAiBotEvent = require("../../EventBotIA/Aplicacion/CrearAiBotEvent");
+const ListarAiBotEvents = require("../../EventBotIA/Aplicacion/ListarAiBotEvents");
+const ObtenerAiBotEventPorId = require("../../EventBotIA/Aplicacion/ObtenerAiBotEventPorId");
+const ActualizarAiBotEvent = require("../../EventBotIA/Aplicacion/ActualizarAiBotEvent");
+const EliminarAiBotEvent = require("../../EventBotIA/Aplicacion/EliminarAiBotEvent");
+
 const WhatsappLineController = require("../../WhatsAppLines/Infraestructura/http/WhatsappLineController");
 const WhatsappLineRoutes = require("../../WhatsAppLines/Infraestructura/http/WhatsappLineRoutes");
 const BotMenuController = require("../../BotMenus/Infraestructura/http/BotMenuController");
@@ -66,6 +73,8 @@ const BotIntentController = require("../../BotIntents/Infraestructura/http/BotIn
 const BotIntentRoutes = require("../../BotIntents/Infraestructura/http/BotIntentRoutes");
 const ChatSessionController = require("../../ChatSessions/Infraestructura/http/ChatSessionController");
 const ChatSessionRoutes = require("../../ChatSessions/Infraestructura/http/ChatSessionRoutes");
+const AiBotEventController = require("../../EventBotIA/Infraestructura/http/AiBotEventController");
+const AiBotEventRoutes = require("../../EventBotIA/Infraestructura/http/AiBotEventRoutes");
 
 module.exports = function registerChatBotSqlModule(app) {
   const whatsappLineRepository = new WLRepositorySequelize();
@@ -75,6 +84,7 @@ module.exports = function registerChatBotSqlModule(app) {
   const messageTypeRepository = new MessageTypeRepositorySequelize();
   const botIntentRepository = new BotIntentRepositorySequelize();
   const chatSessionRepository = new ChatSessionsRepositorySequelize();
+  const aiBotEventRepository = new AiBotEventRepositorySequelize();
 
   const whatsappLineController = new WhatsappLineController({
     crear: new CrearWhatsappLine(whatsappLineRepository),
@@ -136,6 +146,14 @@ module.exports = function registerChatBotSqlModule(app) {
     cerrar: new CerrarChatSession(chatSessionRepository)
   });
 
+  const aiBotEventController = new AiBotEventController({
+    crear: new CrearAiBotEvent(aiBotEventRepository),
+    listar: new ListarAiBotEvents(aiBotEventRepository),
+    obtener: new ObtenerAiBotEventPorId(aiBotEventRepository),
+    actualizar: new ActualizarAiBotEvent(aiBotEventRepository),
+    eliminar: new EliminarAiBotEvent(aiBotEventRepository)
+  });
+
   app.use("/api/chatbotsql/whatsapp-lines", WhatsappLineRoutes(whatsappLineController));
   app.use("/api/chatbotsql/bot-menus", BotMenuRoutes(botMenuController));
   app.use("/api/chatbotsql/bot-menu-options", BotMenuOptionRoutes(botMenuOptionController));
@@ -143,4 +161,5 @@ module.exports = function registerChatBotSqlModule(app) {
   app.use("/api/chatbotsql/message-types", MessageTypeRoutes(messageTypeController));
   app.use("/api/chatbotsql/bot-intents", BotIntentRoutes(botIntentController));
   app.use("/api/chatbotsql/chat-sessions", ChatSessionRoutes(chatSessionController));
+  app.use("/api/chatbotsql/ai-bot-events", AiBotEventRoutes(aiBotEventController));
 };
