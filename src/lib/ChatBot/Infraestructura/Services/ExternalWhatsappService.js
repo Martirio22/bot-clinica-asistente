@@ -1,30 +1,24 @@
-const axios = require("axios");
+const axios = require('axios');
 
 class ExternalWhatsappService {
-  constructor() {
-    this.baseUrl = process.env.WHATSAPP_SERVICE_URL || "http://localhost:3978/api/whatsapp";
-  }
-
-  /**
-   * @param {Object} data 
-   * @returns {Promise<Object>} Respuesta del servicio de WhatsApp
-   */
-  async enviarMensaje(data) {
+  async enviarMensaje(payloadSaliente) {
     try {
-      const payload = {
-        to: data.to,
-        whatsappLineId: data.whatsappLineId || "line-main",
-        type: data.type || "TEXT",
-        message: data.message
+      const url = 'http://localhost:3978/api/whatsapp/send-message';
+
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          'WHATSAPP_API_TOKEN': 'token_interno_para_consumir_whatsapp'
+        }
       };
-
-      const response = await axios.post(`${this.baseUrl}/send-message`, payload);
-
+      const response = await axios.post(url, payloadSaliente, config);
       return response.data;
 
     } catch (error) {
-      console.error("Error consumiendo el servicio externo de WhatsApp:", error.response?.data || error.message);
-      throw new Error(`No se pudo enviar el mensaje por WhatsApp: ${error.message}`);
+      if (error.response) {
+        throw new Error(`No se pudo enviar el mensaje por WhatsApp: Request failed with status code ${error.response.status}`);
+      }
+      throw new Error(`No se pudo conectar con el servicio de WhatsApp: ${error.message}`);
     }
   }
 }
