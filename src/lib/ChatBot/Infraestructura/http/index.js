@@ -1,10 +1,3 @@
-const WLRepositorySequelize = require("../../../ChatBotSql/WhatsAppLines/Infraestructura/WLRepositorySequelize");
-const BotMenuRepositorySequelize = require("../../../ChatBotSql/BotMenus/Infraestructura/BotMenuRepositorySequelize");
-const BMORepositorySequelize = require("../../../ChatBotSql/BotMenuOptions/Infraestructura/BMORepositorySequelize");
-const ChatSessionsRepositorySequelize = require("../../../ChatBotSql/ChatSessions/Infraestructura/ChatSessionRepositorySequelize");
-const SpecialtyRepositorySequelize = require("../../../Clinic/Specialties/Infraestructura/SpecialtyRepositorySequelize");
-const DoctorRepositorySequelize = require("../../../Clinic/Doctors/Infraestructura/DoctorRepositorySequelize");
-
 const ChatMessageRepositoryMongoose = require("../../ChatMessages/Infraestructura/ChatMessageRepositoryMongoose");
 const CrearChatMessage = require("../../ChatMessages/Aplicacion/CrearChatMessage");
 const ListarChatMessagesPorSession = require("../../ChatMessages/Aplicacion/ListarChatMessagesPorSession");
@@ -44,12 +37,6 @@ module.exports = function registerChatBotModule(app) {
   const botLogRepository = new BotLogRepositoryMongoose();
   const webhookLogRepository = new WebhookLogRepositoryMongoose();
 
-  const botMenuRepository = new BotMenuRepositorySequelize();
-  const botMenuOptionRepository = new BMORepositorySequelize();
-  const specialtyRepository = new SpecialtyRepositorySequelize();
-  const doctorRepository = new DoctorRepositorySequelize();
-  const chatSessionRepository = new ChatSessionsRepositorySequelize();
-
   const chatMessageController = new ChatMessageController({
     crear: new CrearChatMessage(chatMessageRepository),
     listarPorSession: new ListarChatMessagesPorSession(chatMessageRepository)
@@ -71,16 +58,7 @@ module.exports = function registerChatBotModule(app) {
   });
 
   const webhookController = new WebhookController({
-    recibirWhatsappWebhook: new RecibirWhatsappWebhook(
-      rawEventRepository, 
-      chatMessageRepository,
-      webhookLogRepository, 
-      botMenuRepository, 
-      botMenuOptionRepository, 
-      specialtyRepository, 
-      doctorRepository,
-      chatSessionRepository     
-    )
+    recibirWhatsappWebhook: new RecibirWhatsappWebhook(rawEventRepository, chatMessageRepository, webhookLogRepository)
   });
 
   app.use("/api/chatbot/chat-messages", ChatMessageRoutes(chatMessageController));

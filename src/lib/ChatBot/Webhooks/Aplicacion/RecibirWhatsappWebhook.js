@@ -1,29 +1,13 @@
 class RecibirWhatsappWebhook {
-  constructor(
-    rawEventRepository, 
-    chatMessageRepository, 
-    webhookLogRepository,
-    // --- INYECTAMOS LOS REPOSITORIOS CLAVE PARA EL FLUJO CONVERSACIONAL ---
-    botMenuRepository,
-    botMenuOptionRepository,
-    specialtyRepository,
-    doctorRepository,
-    chatSessionRepository // Para saber en qué estado/menú está el paciente actualmente
-  ) { 
+  constructor(rawEventRepository, chatMessageRepository, webhookLogRepository) { 
     this.rawEventRepository = rawEventRepository; 
     this.chatMessageRepository = chatMessageRepository;
-    this.webhookLogRepository = webhookLogRepository;
-    
-    // Asignamos las dependencias internas libres de HTTP/Tokens
-    this.botMenuRepository = botMenuRepository;
-    this.botMenuOptionRepository = botMenuOptionRepository;
-    this.specialtyRepository = specialtyRepository;
-    this.doctorRepository = doctorRepository;
-    this.chatSessionRepository = chatSessionRepository;
+    this.webhookLogRepository = webhookLogRepository; 
   }
-
   async ejecutar(payload) {
     const startTime = Date.now();
+    // Este use case representa la entrada desde whatsapp-web.js o un worker externo.
+    // Se guarda el evento crudo en MongoDB y, si es un mensaje, se registra en chat_messages.
     try {
       const eventType = payload.eventType || "MESSAGE_RECEIVED";
       await this.rawEventRepository.save({ eventType, phoneNumber: payload.from, whatsappMessageId: payload.whatsappMessageId, chatSessionId: payload.chatSessionId, payload });
@@ -41,33 +25,7 @@ class RecibirWhatsappWebhook {
           whatsappMessageId: payload.whatsappMessageId || null,
           metadata: payload
         });
-
-        // ====================================================================
-        // AQUÍ ES DONDE ARMAS TU FLUJO CONVERSACIONAL SIN PREOCUPARTE POR TOKENS
-        // ====================================================================
-        const textoUsuario = payload.messageText.trim().toLowerCase();
-
-        if (textoUsuario === 'menú' || textoUsuario === 'hola') {
-          // Ejemplo: Consultas el menú de bienvenida directo a la base de datos
-          const menuPrincipal = await this.botMenuRepository.findMenuWithRules({ isPrincipal: true });
-          // Lógica para formatear y responder al usuario...
-        } 
-        
-        else if (textoUsuario === '1' || textoUsuario === 'especialidades') {
-          // Ejemplo: Listas las especialidades directo usando Sequelize sin pasar por controladores
-          const especialidades = await this.specialtyRepository.findAll({ isActive: true });
-          // Armas el string: "Seleccione una especialidad: \n1. Cardiología..."
-        } 
-        
-        else if (textoUsuario.startsWith('doctor_')) {
-          // Ejemplo: Listas doctores de forma directa
-          const especialidadId = textoUsuario.split('_')[1];
-          const doctores = await this.doctorRepository.findAll({ specialtyId: especialidadId, isActive: true });
-          // Armas la respuesta con los nombres de los doctores...
-        }
       }
-
-      // Registro de éxito en logs
       await this.webhookLogRepository.save({
         provider: "WHATSAPP",
         endpoint: "/api/chatbot/webhooks/whatsapp",
@@ -80,7 +38,6 @@ class RecibirWhatsappWebhook {
       return { received: true, message };
 
     } catch (error) {
-      // Registro de errores en logs
       await this.webhookLogRepository.save({
         provider: "WHATSAPP",
         endpoint: "/api/chatbot/webhooks/whatsapp",
@@ -95,5 +52,4 @@ class RecibirWhatsappWebhook {
     }
   }
 }
-
 module.exports = RecibirWhatsappWebhook;
