@@ -34,14 +34,31 @@ class AARepositorySequelize {
   }
 
   async findAll(filters = {}) {
+    const whereClause = {};
+
+    if (filters.startDate && filters.endDate) {
+      whereClause['$appointment.start_date$'] = {
+        [require('sequelize').Op.between]: [filters.startDate, filters.endDate]
+      };
+    } else if (filters.startDate) {
+      whereClause['$appointment.start_date$'] = filters.startDate;
+    }
+
+    Object.keys(filters).forEach(key => {
+      if (key !== 'startDate' && key !== 'endDate') {
+        whereClause[key] = filters[key];
+      }
+    });
+
     const data = await AttendanceAuthorizationModel.findAll({
-      where: {...filters},
+      where: whereClause,
       include: [
         { model: AppointmentModel, as: "appointment" },
         { model: UserModel, as: "authorizedByUser" }
       ],
-    order: [["createdAt", "DESC"]]
+      order: [["createdAt", "DESC"]]
     });
+    
     return data.map(d => this.toDomain(d));
   }
 

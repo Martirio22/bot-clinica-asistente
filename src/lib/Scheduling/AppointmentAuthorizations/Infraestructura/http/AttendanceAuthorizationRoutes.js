@@ -8,7 +8,7 @@ module.exports = (controller) => {
 
   router.use(authMiddleware);
 
-  router.post("/", roleMiddleware(["ASISTENTE"]), asyncHandler(controller.crear));
+  router.post("/", roleMiddleware(["ASISTENTE", 'ADMIN']), asyncHandler(controller.crear));
   router.get("/", asyncHandler(controller.listar));
   router.get("/:id", asyncHandler(controller.obtener));
   router.put("/:id", roleMiddleware(["ASISTENTE"]), asyncHandler(controller.actualizar));
