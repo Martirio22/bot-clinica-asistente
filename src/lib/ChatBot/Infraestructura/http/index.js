@@ -3,6 +3,9 @@ const CrearChatMessage = require("../../ChatMessages/Aplicacion/CrearChatMessage
 const ListarChatMessagesPorSession = require("../../ChatMessages/Aplicacion/ListarChatMessagesPorSession");
 const ChatMessageController = require("../../ChatMessages/Infraestructura/http/ChatMessageController");
 const ChatMessageRoutes = require("../../ChatMessages/Infraestructura/http/ChatMessageRoutes");
+const ExternalWhatsappService = require("../../Infraestructura/Services/ExternalWhatsappService");
+const BotMenuRepositorySequelize = require("../../../ChatBotSql/BotMenus/Infraestructura/BotMenuRepositorySequelize"); 
+const BotMenuOptionRepositorySequelize = require("../../../ChatBotSql/BotMenuOptions/Infraestructura/BMORepositorySequelize");
 
 const MessageDeliveryLogRepositoryMongoose = require("../../MessageDeliveryLogs/Infraestructura/MessageDeliveryLogRepositoryMongoose");
 const CrearMessageDeliveryLog = require("../../MessageDeliveryLogs/Aplicacion/CrearMessageDeliveryLog");
@@ -36,6 +39,9 @@ module.exports = function registerChatBotModule(app) {
   const contextRepository = new ConversationContextRepositoryMongoose();
   const botLogRepository = new BotLogRepositoryMongoose();
   const webhookLogRepository = new WebhookLogRepositoryMongoose();
+  const externalWhatsappService = new ExternalWhatsappService();
+  const botMenuRepository = new BotMenuRepositorySequelize();
+  const botMenuOptionRepository = new BotMenuOptionRepositorySequelize();
 
   const chatMessageController = new ChatMessageController({
     crear: new CrearChatMessage(chatMessageRepository),
@@ -58,7 +64,8 @@ module.exports = function registerChatBotModule(app) {
   });
 
   const webhookController = new WebhookController({
-    recibirWhatsappWebhook: new RecibirWhatsappWebhook(rawEventRepository, chatMessageRepository, webhookLogRepository)
+    recibirWhatsappWebhook: new RecibirWhatsappWebhook(rawEventRepository, chatMessageRepository, webhookLogRepository, externalWhatsappService, botMenuRepository,       // Capacidad de leer Menús de Postgres
+      botMenuOptionRepository)
   });
 
   app.use("/api/chatbot/chat-messages", ChatMessageRoutes(chatMessageController));
