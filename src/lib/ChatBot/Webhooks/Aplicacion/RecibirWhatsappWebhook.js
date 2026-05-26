@@ -1091,16 +1091,24 @@ class RecibirWhatsappWebhook {
   _nombreMedicoDesdeCita(cita) {
     const user = cita.doctor?.user;
 
-    if (!user) {
-      return "Médico no registrado";
+    if (user) {
+      const nombre = [
+        user.firstName,
+        user.lastName
+      ].filter(Boolean).join(" ");
+
+      if (nombre) return nombre;
     }
 
-    const nombre = [
-      user.firstName,
-      user.lastName
-    ].filter(Boolean).join(" ");
+    if (cita.doctor?.professionalRegistry) {
+      return `Médico registro ${cita.doctor.professionalRegistry}`;
+    }
 
-    return nombre || "Médico no registrado";
+    if (cita.doctorId) {
+      return `Médico ID ${cita.doctorId}`;
+    }
+
+    return "Médico no registrado";
   }
 
   _formatearFechaHoraCita(valor) {

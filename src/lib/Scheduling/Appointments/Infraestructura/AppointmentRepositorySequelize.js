@@ -12,7 +12,14 @@ const UserModel = require("../../../Security/Users/Infraestructura/UserModel");
 
 const FULL_INCLUDE = [
   { model: PatientModel, as: "patient" },
-  { model: DoctorModel, as: "doctor" },
+  {
+    model: DoctorModel,
+    as: "doctor",
+    include: [
+      { model: UserModel, as: "user" },
+      { model: SpecialtyModel, as: "specialty" }
+    ]
+  },
   { model: SpecialtyModel, as: "specialty" },
   { model: BranchModel, as: "branch" },
   { model: OfficeModel, as: "office" },
@@ -21,7 +28,7 @@ const FULL_INCLUDE = [
 ];
 
 class AppointmentRepositorySequelize {
-  
+
   toDomain(model) {
     if (!model) return null;
     const plain = model.toJSON ? model.toJSON() : model;
@@ -46,7 +53,7 @@ class AppointmentRepositorySequelize {
 
   async softDeleteWithStatus(id, statusId) {
     return await AppointmentModel.update(
-      { isActive: false, statusId: statusId }, 
+      { isActive: false, statusId: statusId },
       { where: { id } }
     );
   }
@@ -82,15 +89,15 @@ class AppointmentRepositorySequelize {
     const data = await AppointmentModel.findAll({
       where,
       include: FULL_INCLUDE,
-      order: [["startDate", "ASC"]] 
+      order: [["startDate", "ASC"]]
     });
-    
+
     return data.map(item => this.toDomain(item));
   }
 
   async findOverlap(doctorId, startDate, endDate, excludeId = null) {
     const inactiveStatuses = await this._getInactiveStatusIds();
-    
+
     const where = {
       doctorId,
       isActive: true,
@@ -111,7 +118,7 @@ class AppointmentRepositorySequelize {
 
   async findDuplicatePatientAppointment(patientId, specialtyId, date) {
     const inactiveStatuses = await this._getInactiveStatusIds();
-    
+
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
@@ -130,7 +137,7 @@ class AppointmentRepositorySequelize {
 
   async _getInactiveStatusIds() {
     const inactive = await AppointmentStatusModel.findAll({
-      where: { 
+      where: {
         code: { [Op.in]: ['CANCELADA', 'REPROGRAMADA', 'EXPIRADA'] }
       }
     });
