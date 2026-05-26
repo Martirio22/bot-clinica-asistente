@@ -7,7 +7,7 @@ class ObtenerWhatsappLinePorId {
 
   async ejecutar(id) {
     const line = await this.whatsappLineRepository.findById(id);
-    if (!line || !line.isActive) throw new NotFoundError("Línea de WhatsApp no encontrada o inactiva");
+    if (!line) throw new NotFoundError("Línea de WhatsApp no encontrada o inactiva");
     return line;
   }
 }

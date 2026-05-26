@@ -7,7 +7,7 @@ class ObtenerBotIntentPorCode {
 
   async ejecutar(code) {
     const intent = await this.botIntentRepository.findByCode(code);
-    if (!intent || !intent.isActive) throw new NotFoundError(`Intención del bot con código '${code}' no encontrada`);
+    if (!intent) throw new NotFoundError(`Intención del bot con código '${code}' no encontrada`);
     return intent;
   }
 }

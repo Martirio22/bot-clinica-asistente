@@ -7,7 +7,7 @@ class ObtenerChatSessionStatusPorId {
 
   async ejecutar(id) {
     const status = await this.statusRepository.findById(id);
-    if (!status || !status.isActive) throw new NotFoundError("Estado de sesión no encontrado");
+    if (!status) throw new NotFoundError("Estado de sesión no encontrado");
     return status;
   }
 }

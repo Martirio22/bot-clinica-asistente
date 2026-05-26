@@ -7,7 +7,7 @@ class ActualizarMessageType {
 
   async ejecutar(id, data) {
     const messageType = await this.messageTypeRepository.findById(id);
-    if (!messageType || !messageType.isActive) throw new NotFoundError("Tipo de mensaje no encontrado");
+    if (!messageType) throw new NotFoundError("Tipo de mensaje no encontrado");
 
     return await this.messageTypeRepository.update(id, {
       code: data.code ? data.code.trim().toUpperCase() : messageType.code,

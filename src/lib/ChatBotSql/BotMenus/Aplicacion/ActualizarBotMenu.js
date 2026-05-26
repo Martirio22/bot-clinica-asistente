@@ -7,7 +7,7 @@ class ActualizarBotMenu {
 
   async ejecutar(id, data) {
     const menu = await this.botMenuRepository.findById(id);
-    if (!menu || !menu.isActive) throw new NotFoundError("Menú del bot no encontrado");
+    if (!menu) throw new NotFoundError("Menú del bot no encontrado");
 
     return await this.botMenuRepository.update(id, {
       code: data.code ? data.code.trim().toUpperCase() : menu.code,
