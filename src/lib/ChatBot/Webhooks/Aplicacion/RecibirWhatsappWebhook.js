@@ -12,7 +12,8 @@ class RecibirWhatsappWebhook {
     contextRepository,
     doctorRepository,
     crearAppointmentUseCase,
-    disponibilidadUseCase
+    disponibilidadUseCase,
+    appointmentRepository
   ) {
     this.rawEventRepository = rawEventRepository;
     this.chatMessageRepository = chatMessageRepository;
@@ -27,6 +28,7 @@ class RecibirWhatsappWebhook {
     this.doctorRepository = doctorRepository;
     this.crearAppointmentUseCase = crearAppointmentUseCase;
     this.disponibilidadUseCase = disponibilidadUseCase;
+    this.appointmentRepository = appointmentRepository;
   }
 
   async ejecutar(payload) {
@@ -51,25 +53,25 @@ class RecibirWhatsappWebhook {
 
       const paciente = await this._obtenerOCrearPaciente({
         numeroPaciente,
-        nombreWhatsapp: payload.patientWhatsappName || payload.profileName || "Paciente WhatsApp"
+        nombreWhatsapp: payloadNormalizado.patientWhatsappName || "Paciente WhatsApp"
       });
 
       const sesion = await this._obtenerOCrearSesion({
         paciente,
         numeroPaciente,
-        whatsappLineId: payload.whatsappLineId,
-        nombreWhatsapp: payload.patientWhatsappName || payload.profileName || paciente.firstName
+        whatsappLineId: payloadNormalizado.whatsappLineId,
+        nombreWhatsapp: payloadNormalizado.patientWhatsappName || paciente.firstName
       });
 
       const mensajeEntrante = await this.chatMessageRepository.save({
         chatSessionId: sesion.id,
         patientId: paciente.id,
-        whatsappLineId: payload.whatsappLineId,
-        appointmentId: payload.appointmentId || null,
+        whatsappLineId: payloadNormalizado.whatsappLineId,
+        appointmentId: payloadNormalizado.appointmentId || null,
         sender: "PATIENT",
-        contentType: payload.contentType || "TEXT",
+        contentType: payloadNormalizado.contentType || "TEXT",
         messageText: textoUsuario,
-        whatsappMessageId: payload.whatsappMessageId || null,
+        whatsappMessageId: payloadNormalizado.whatsappMessageId || null,
         metadata: payload
       });
 
@@ -270,7 +272,7 @@ class RecibirWhatsappWebhook {
     }
 
     if (this._esSeleccionNumerica(texto)) {
-      return await this._resolverOpcionMenuPrincipal(texto, sesion);
+      return await this._resolverOpcionMenuPrincipal(texto, sesion, paciente);
     }
 
     return [
@@ -328,7 +330,7 @@ class RecibirWhatsappWebhook {
     return texto.trim();
   }
 
-  async _resolverOpcionMenuPrincipal(codigoOpcion, sesion) {
+  async _resolverOpcionMenuPrincipal(codigoOpcion, sesion, paciente) {
     const menuPrincipal = await this.botMenuRepository.findMainMenu();
 
     if (!menuPrincipal || !menuPrincipal.isActive) {
@@ -361,8 +363,10 @@ class RecibirWhatsappWebhook {
       case "AGENDAR_CITA":
         return await this._iniciarFlujoAgendarCita(sesion);
 
+      // case "CONSULTAR_CITAS":
+      //   return this._respuestaConsultarCitasTemporal();
       case "CONSULTAR_CITAS":
-        return this._respuestaConsultarCitasTemporal();
+        return await this._respuestaConsultarCitas(paciente);
 
       case "CONSULTAR_RECETA":
         return this._respuestaConsultarRecetaTemporal();
@@ -1008,8 +1012,113 @@ class RecibirWhatsappWebhook {
     ].join("\n");
   }
 
-  _respuestaConsultarCitasTemporal() {
-    return "Estoy preparando la consulta de tus citas. Por ahora un asistente puede ayudarte escribiendo 6.";
+  // _respuestaConsultarCitasTemporal() {
+  //   return "Estoy preparando la consulta de tus citas. Por ahora un asistente puede ayudarte escribiendo 6.";
+  // }
+  async _respuestaConsultarCitas(paciente) {
+    if (!this.appointmentRepository) {
+      throw new Error("AppointmentRepository no está configurado en el webhook");
+    }
+
+    const citas = await this.appointmentRepository.findAll({
+      patientId: paciente.id,
+      isActive: true
+    });
+
+    if (!citas || citas.length === 0) {
+      return [
+        "No encontré citas médicas registradas a tu nombre.",
+        "",
+        "Puedes escribir *menu* para volver al menú principal."
+      ].join("\n");
+    }
+
+    const ahora = new Date();
+
+    const futuras = citas
+      .filter((cita) => new Date(cita.startDate) >= ahora)
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+    const pasadas = citas
+      .filter((cita) => new Date(cita.startDate) < ahora)
+      .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+
+    let texto = "";
+
+    if (futuras.length > 0) {
+      texto += "Tus próximas citas médicas son:\n\n";
+
+      futuras.slice(0, 5).forEach((cita, index) => {
+        texto += `${index + 1}. ${this._formatearCita(cita)}\n\n`;
+      });
+    } else {
+      texto += "No tienes citas médicas próximas.\n\n";
+    }
+
+    if (pasadas.length > 0) {
+      texto += "Tus últimas citas registradas fueron:\n\n";
+
+      pasadas.slice(0, 3).forEach((cita, index) => {
+        texto += `${index + 1}. ${this._formatearCita(cita)}\n\n`;
+      });
+    }
+
+    texto += "Puedes escribir *menu* para volver al menú principal.";
+
+    return texto.trim();
+  }
+
+  _formatearCita(cita) {
+    const especialidad = cita.specialty?.name || "Especialidad no registrada";
+    const medico = this._nombreMedicoDesdeCita(cita);
+    const fechaHora = this._formatearFechaHoraCita(cita.startDate);
+    const sucursal = cita.branch?.name || "Sucursal no registrada";
+    const consultorio = cita.office?.name || "Consultorio no registrado";
+    const estado = cita.status?.name || cita.status?.code || "Estado no registrado";
+    const motivo = cita.reason || "Sin motivo registrado";
+
+    return [
+      `Especialidad: ${especialidad}`,
+      `Médico: ${medico}`,
+      `Fecha y hora: ${fechaHora}`,
+      `Sucursal: ${sucursal}`,
+      `Consultorio: ${consultorio}`,
+      `Estado: ${estado}`,
+      `Motivo: ${motivo}`
+    ].join("\n");
+  }
+
+  _nombreMedicoDesdeCita(cita) {
+    const user = cita.doctor?.user;
+
+    if (!user) {
+      return "Médico no registrado";
+    }
+
+    const nombre = [
+      user.firstName,
+      user.lastName
+    ].filter(Boolean).join(" ");
+
+    return nombre || "Médico no registrado";
+  }
+
+  _formatearFechaHoraCita(valor) {
+    if (!valor) return "Fecha no registrada";
+
+    const fecha = new Date(valor);
+
+    if (isNaN(fecha.getTime())) {
+      return String(valor);
+    }
+
+    const yyyy = fecha.getFullYear();
+    const mm = String(fecha.getMonth() + 1).padStart(2, "0");
+    const dd = String(fecha.getDate()).padStart(2, "0");
+    const hh = String(fecha.getHours()).padStart(2, "0");
+    const min = String(fecha.getMinutes()).padStart(2, "0");
+
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
   }
 
   _respuestaConsultarRecetaTemporal() {

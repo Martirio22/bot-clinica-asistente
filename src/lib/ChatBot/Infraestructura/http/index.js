@@ -116,7 +116,8 @@ module.exports = function registerChatBotModule(app) {
       contextRepository,
       doctorRepository,
       crearAppointmentUseCase,
-      disponibilidadUseCase
+      disponibilidadUseCase,
+      appointmentRepository
     )
   });
 
