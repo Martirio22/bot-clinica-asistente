@@ -2,7 +2,7 @@ const ChatSession = require("../Dominio/Entidades/ChatSession");
 const ChatSessionModel = require("./ChatSessionModel");
 const PatientModel = require("../../../Clinic/Patients/Infraestructura/PatientModel");
 const ChatSessionStatusModel = require("../../ChatSessionStatus/Infraestructura/ChatSessionStatusModel");
-const AssistantModel = require("../../../Clinic/ClinicalAssistants/Infraestructura/ClinicalAssistantModel"); 
+const AssistantModel = require("../../../Clinic/ClinicalAssistants/Infraestructura/ClinicalAssistantModel");
 const WhatsappLineModel = require("../../WhatsAppLines/Infraestructura/WhatsappLineModel");
 
 const FULL_INCLUDE = [
@@ -12,8 +12,10 @@ const FULL_INCLUDE = [
   { model: WhatsappLineModel, as: "whatsappLine" }
 ];
 
+const { Op } = require("sequelize");
+
 class ChatSessionRepositorySequelize {
-  
+
   toDomain(model) {
     if (!model) return null;
     const plain = model.toJSON ? model.toJSON() : model;
@@ -53,6 +55,29 @@ class ChatSessionRepositorySequelize {
       order: [["startDate", "DESC"]]
     });
     return data.map(item => this.toDomain(item));
+  }
+
+  async findActiveByWhatsappNumberAndLine(patientWhatsappNumber, whatsappLineId) {
+    const closedStatusId = await this.findStatusByCode("CERRADA");
+
+    const where = {
+      patientWhatsappNumber,
+      whatsappLineId
+    };
+
+    if (closedStatusId) {
+      where.sessionStatusId = {
+        [Op.ne]: closedStatusId
+      };
+    }
+
+    const data = await ChatSessionModel.findOne({
+      where,
+      include: FULL_INCLUDE,
+      order: [["startDate", "DESC"]]
+    });
+
+    return this.toDomain(data);
   }
 }
 

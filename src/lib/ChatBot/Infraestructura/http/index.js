@@ -4,7 +4,7 @@ const ListarChatMessagesPorSession = require("../../ChatMessages/Aplicacion/List
 const ChatMessageController = require("../../ChatMessages/Infraestructura/http/ChatMessageController");
 const ChatMessageRoutes = require("../../ChatMessages/Infraestructura/http/ChatMessageRoutes");
 const ExternalWhatsappService = require("../../Infraestructura/Services/ExternalWhatsappService");
-const BotMenuRepositorySequelize = require("../../../ChatBotSql/BotMenus/Infraestructura/BotMenuRepositorySequelize"); 
+const BotMenuRepositorySequelize = require("../../../ChatBotSql/BotMenus/Infraestructura/BotMenuRepositorySequelize");
 const BotMenuOptionRepositorySequelize = require("../../../ChatBotSql/BotMenuOptions/Infraestructura/BMORepositorySequelize");
 
 const MessageDeliveryLogRepositoryMongoose = require("../../MessageDeliveryLogs/Infraestructura/MessageDeliveryLogRepositoryMongoose");
@@ -29,8 +29,11 @@ const RegistrarBotLog = require("../../BotLogs/Aplicacion/RegistrarBotLog");
 const ListarBotLogsPorSession = require("../../BotLogs/Aplicacion/ListarBotLogsPorSession");
 const BotLogController = require("../../BotLogs/Infraestructura/http/BotLogController");
 const BotLogRoutes = require("../../BotLogs/Infraestructura/http/BotLogRoutes");
+const PatientRepositorySequelize = require("../../../Clinic/Patients/Infraestructura/PatientRepositorySequelize");
+const ChatSessionRepositorySequelize = require("../../../ChatBotSql/ChatSessions/Infraestructura/ChatSessionRepositorySequelize");
 
 const WebhookLogRepositoryMongoose = require("../../WebhookLogs/Infraestructura/WebhookLogRepositoryMongoose");
+const SpecialtyRepositorySequelize = require("../../../Clinic/Specialties/Infraestructura/SpecialtyRepositorySequelize");
 
 module.exports = function registerChatBotModule(app) {
   const chatMessageRepository = new ChatMessageRepositoryMongoose();
@@ -42,6 +45,9 @@ module.exports = function registerChatBotModule(app) {
   const externalWhatsappService = new ExternalWhatsappService();
   const botMenuRepository = new BotMenuRepositorySequelize();
   const botMenuOptionRepository = new BotMenuOptionRepositorySequelize();
+  const patientRepository = new PatientRepositorySequelize();
+  const chatSessionRepository = new ChatSessionRepositorySequelize();
+  const specialtyRepository = new SpecialtyRepositorySequelize();
 
   const chatMessageController = new ChatMessageController({
     crear: new CrearChatMessage(chatMessageRepository),
@@ -64,8 +70,17 @@ module.exports = function registerChatBotModule(app) {
   });
 
   const webhookController = new WebhookController({
-    recibirWhatsappWebhook: new RecibirWhatsappWebhook(rawEventRepository, chatMessageRepository, webhookLogRepository, externalWhatsappService, botMenuRepository,       // Capacidad de leer Menús de Postgres
-      botMenuOptionRepository)
+    recibirWhatsappWebhook: new RecibirWhatsappWebhook(
+      rawEventRepository,
+      chatMessageRepository,
+      webhookLogRepository,
+      externalWhatsappService,
+      botMenuRepository,
+      botMenuOptionRepository,
+      patientRepository,
+      chatSessionRepository,
+      specialtyRepository
+    )
   });
 
   app.use("/api/chatbot/chat-messages", ChatMessageRoutes(chatMessageController));
