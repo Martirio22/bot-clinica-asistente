@@ -692,6 +692,20 @@ class RecibirWhatsappWebhook {
       ].join("\n");
     }
 
+    const fechaSolicitada = new Date(`${fecha}T00:00:00-05:00`);
+
+    if (isNaN(fechaSolicitada.getTime())) {
+      return [
+        "La fecha ingresada no es válida.",
+        "Por favor escribe una fecha correcta con formato *AAAA-MM-DD*.",
+        "",
+        "Ejemplo: 2026-05-28"
+      ].join("\n");
+    }
+
+    const ahora = new Date();
+    const minAllowedDate = new Date(ahora.getTime() + 24 * 60 * 60 * 1000);
+
     const selectedDoctor = contexto.temporaryData?.selectedDoctor;
 
     if (!selectedDoctor) {
@@ -703,18 +717,32 @@ class RecibirWhatsappWebhook {
       fecha
     );
 
-    const slots = (disponibilidad.slots || []).map((slot, index) => ({
+    let slots = (disponibilidad.slots || []).map((slot, index) => ({
       numero: index + 1,
       inicio: slot.inicio,
       fin: slot.fin
+    }));
+
+    // Filtrar horarios que no cumplen las 24 horas de anticipación
+    slots = slots.filter((slot) => {
+      const inicioSlot = this._slotInicioToDate(slot.inicio);
+      return inicioSlot && inicioSlot >= minAllowedDate;
+    });
+
+    // Reordenar numeración después de filtrar
+    slots = slots.map((slot, index) => ({
+      ...slot,
+      numero: index + 1
     }));
 
     if (slots.length === 0) {
       return [
         "No encontré horarios disponibles para esa fecha.",
         "",
-        "Escribe otra fecha con formato *AAAA-MM-DD*.",
-        "Ejemplo: 2026-05-29"
+        "Recuerda que las citas deben programarse con al menos 24 horas de anticipación.",
+        "",
+        "Por favor escribe otra fecha con formato *AAAA-MM-DD*.",
+        "Ejemplo: 2026-05-28"
       ].join("\n");
     }
 
@@ -740,6 +768,28 @@ class RecibirWhatsappWebhook {
     texto += "\nEscribe el número del horario que deseas.";
 
     return texto.trim();
+  }
+
+  _slotInicioToDate(valor) {
+    const texto = String(valor || "").trim();
+
+    if (!texto) return null;
+
+    // Si viene como "2026-05-26 08:00:00"
+    if (texto.includes(" ") && !texto.includes("T")) {
+      const fechaIso = `${texto.replace(" ", "T")}-05:00`;
+      const date = new Date(fechaIso);
+      return isNaN(date.getTime()) ? null : date;
+    }
+
+    // Si ya viene como "2026-05-26T08:00:00"
+    if (texto.includes("T")) {
+      const fechaIso = texto.includes("-05:00") ? texto : `${texto}-05:00`;
+      const date = new Date(fechaIso);
+      return isNaN(date.getTime()) ? null : date;
+    }
+
+    return null;
   }
 
   async _agendarSeleccionarHorario({ textoUsuario, sesion, contexto }) {
@@ -831,15 +881,44 @@ class RecibirWhatsappWebhook {
 
     const startDate = this._slotInicioToIso(data.selectedSlot.inicio);
 
-    const cita = await this.crearAppointmentUseCase.ejecutar({
-      patientId: paciente.id,
-      doctorId: data.selectedDoctor.id,
-      startDate,
-      reason: data.reason,
-      origin: "WHATSAPP",
-      isCreatedByBot: true,
-      observation: "Cita creada desde bot de WhatsApp"
-    });
+    let cita = null;
+
+    try {
+      cita = await this.crearAppointmentUseCase.ejecutar({
+        patientId: paciente.id,
+        doctorId: data.selectedDoctor.id,
+        startDate,
+        reason: data.reason,
+        origin: "WHATSAPP",
+        isCreatedByBot: true,
+        observation: "Cita creada desde bot de WhatsApp"
+      });
+    } catch (error) {
+      const mensajeError = error.message || "No se pudo registrar la cita médica.";
+
+      await this._guardarContexto({
+        chatSessionId: sesion.id,
+        currentStep: "AGENDAR_INGRESAR_FECHA",
+        lastIntent: "AGENDAR_CITA",
+        temporaryData: {
+          selectedSpecialty: data.selectedSpecialty,
+          especialidades: data.especialidades,
+          medicos: data.medicos,
+          selectedDoctor: data.selectedDoctor
+        }
+      });
+
+      return [
+        "No pude registrar la cita médica.",
+        "",
+        mensajeError,
+        "",
+        "Por favor escribe otra fecha para consultar nuevos horarios.",
+        "Formato: *AAAA-MM-DD*",
+        "",
+        "Ejemplo: 2026-05-28"
+      ].join("\n");
+    }
 
     await this._guardarContexto({
       chatSessionId: sesion.id,
