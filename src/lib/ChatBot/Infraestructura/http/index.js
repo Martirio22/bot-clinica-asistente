@@ -34,6 +34,14 @@ const ChatSessionRepositorySequelize = require("../../../ChatBotSql/ChatSessions
 
 const WebhookLogRepositoryMongoose = require("../../WebhookLogs/Infraestructura/WebhookLogRepositoryMongoose");
 const SpecialtyRepositorySequelize = require("../../../Clinic/Specialties/Infraestructura/SpecialtyRepositorySequelize");
+const AppointmentRepositorySequelize = require("../../../Scheduling/Appointments/Infraestructura/AppointmentRepositorySequelize");
+const DoctorRepositorySequelize = require("../../../Clinic/Doctors/Infraestructura/DoctorRepositorySequelize");
+const DoctorScheduleRepositorySequelize = require("../../../Scheduling/DoctorSchedules/Infraestructura/DoctorScheduleRepositorySequelize");
+const ScheduleBlockRepositorySequelize = require("../../../Scheduling/DoctorScheduleBlocks/Infraestructura/ScheduleBlockRepositorySequelize");
+const BranchRepositorySequelize = require("../../../Clinic/Branches/Infraestructura/BranchRepositorySequelize");
+const OfficeRepositorySequelize = require("../../../Clinic/Offices/Infraestructura/OfficeRepositorySequelize");
+const CrearAppointment = require("../../../Scheduling/Appointments/Aplicacion/CrearAppointment");
+const ObtenerDisponibilidadMedico = require("../../../Scheduling/Appointments/Aplicacion/ObtenerDisponibilidadPorMedico");
 
 module.exports = function registerChatBotModule(app) {
   const chatMessageRepository = new ChatMessageRepositoryMongoose();
@@ -48,6 +56,12 @@ module.exports = function registerChatBotModule(app) {
   const patientRepository = new PatientRepositorySequelize();
   const chatSessionRepository = new ChatSessionRepositorySequelize();
   const specialtyRepository = new SpecialtyRepositorySequelize();
+  const appointmentRepository = new AppointmentRepositorySequelize();
+  const doctorRepository = new DoctorRepositorySequelize();
+  const doctorScheduleRepository = new DoctorScheduleRepositorySequelize();
+  const scheduleBlockRepository = new ScheduleBlockRepositorySequelize();
+  const branchRepository = new BranchRepositorySequelize();
+  const officeRepository = new OfficeRepositorySequelize();
 
   const chatMessageController = new ChatMessageController({
     crear: new CrearChatMessage(chatMessageRepository),
@@ -69,6 +83,25 @@ module.exports = function registerChatBotModule(app) {
     listarPorSession: new ListarBotLogsPorSession(botLogRepository)
   });
 
+  const crearAppointmentUseCase = new CrearAppointment({
+    appointment: appointmentRepository,
+    doctor: doctorRepository,
+    patient: patientRepository,
+    schedule: doctorScheduleRepository,
+    blocking: scheduleBlockRepository,
+    specialty: specialtyRepository,
+    branch: branchRepository,
+    office: officeRepository,
+    status: appointmentRepository
+  });
+
+  const disponibilidadUseCase = new ObtenerDisponibilidadMedico(
+    appointmentRepository,
+    doctorScheduleRepository,
+    scheduleBlockRepository,
+    doctorRepository
+  );
+
   const webhookController = new WebhookController({
     recibirWhatsappWebhook: new RecibirWhatsappWebhook(
       rawEventRepository,
@@ -79,7 +112,11 @@ module.exports = function registerChatBotModule(app) {
       botMenuOptionRepository,
       patientRepository,
       chatSessionRepository,
-      specialtyRepository
+      specialtyRepository,
+      contextRepository,
+      doctorRepository,
+      crearAppointmentUseCase,
+      disponibilidadUseCase
     )
   });
 

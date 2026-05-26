@@ -8,7 +8,11 @@ class RecibirWhatsappWebhook {
     botMenuOptionRepository,
     patientRepository,
     chatSessionRepository,
-    specialtyRepository
+    specialtyRepository,
+    contextRepository,
+    doctorRepository,
+    crearAppointmentUseCase,
+    disponibilidadUseCase
   ) {
     this.rawEventRepository = rawEventRepository;
     this.chatMessageRepository = chatMessageRepository;
@@ -19,6 +23,10 @@ class RecibirWhatsappWebhook {
     this.patientRepository = patientRepository;
     this.chatSessionRepository = chatSessionRepository;
     this.specialtyRepository = specialtyRepository;
+    this.contextRepository = contextRepository;
+    this.doctorRepository = doctorRepository;
+    this.crearAppointmentUseCase = crearAppointmentUseCase;
+    this.disponibilidadUseCase = disponibilidadUseCase;
   }
 
   async ejecutar(payload) {
@@ -240,7 +248,25 @@ class RecibirWhatsappWebhook {
     const texto = String(textoUsuario || "").trim().toLowerCase();
 
     if (this._esSaludoOMenu(texto)) {
+      await this._guardarContexto({
+        chatSessionId: sesion.id,
+        currentStep: "MENU_PRINCIPAL",
+        lastIntent: null,
+        temporaryData: {}
+      });
+
       return await this._construirMenuPrincipal();
+    }
+
+    const contexto = await this.contextRepository.findByChatSessionId(sesion.id);
+
+    if (contexto?.lastIntent === "AGENDAR_CITA") {
+      return await this._procesarFlujoAgendarCita({
+        textoUsuario: texto,
+        sesion,
+        paciente,
+        contexto
+      });
     }
 
     if (this._esSeleccionNumerica(texto)) {
@@ -330,8 +356,10 @@ class RecibirWhatsappWebhook {
       case "CONSULTAR_ESPECIALIDADES":
         return await this._respuestaEspecialidades();
 
+      // case "AGENDAR_CITA":
+      //   return this._respuestaAgendarCitaTemporal();
       case "AGENDAR_CITA":
-        return this._respuestaAgendarCitaTemporal();
+        return await this._iniciarFlujoAgendarCita(sesion);
 
       case "CONSULTAR_CITAS":
         return this._respuestaConsultarCitasTemporal();
@@ -446,12 +474,458 @@ class RecibirWhatsappWebhook {
     return texto.trim();
   }
 
-  _respuestaAgendarCitaTemporal() {
+  // _respuestaAgendarCitaTemporal() {
+  //   return [
+  //     "Perfecto, vamos a agendar tu cita médica.",
+  //     "Por ahora estoy preparando el flujo de especialidad, médico y horario.",
+  //     "",
+  //     "Un asistente puede ayudarte si escribes 6."
+  //   ].join("\n");
+  // }
+  async _iniciarFlujoAgendarCita(sesion) {
+    const especialidades = await this.specialtyRepository.findAll();
+
+    const activas = (especialidades || [])
+      .filter((x) => x.isActive)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    if (activas.length === 0) {
+      return [
+        "Por el momento no tenemos especialidades disponibles para agendar.",
+        "",
+        "Escribe *menu* para volver al menú principal."
+      ].join("\n");
+    }
+
+    const opciones = activas.map((especialidad, index) => ({
+      numero: index + 1,
+      id: especialidad.id,
+      name: especialidad.name
+    }));
+
+    await this._guardarContexto({
+      chatSessionId: sesion.id,
+      currentStep: "AGENDAR_SELECCION_ESPECIALIDAD",
+      lastIntent: "AGENDAR_CITA",
+      temporaryData: {
+        especialidades: opciones
+      }
+    });
+
+    let texto = "Perfecto, vamos a agendar tu cita médica.\n\n";
+    texto += "Primero selecciona una especialidad:\n\n";
+
+    opciones.forEach((opcion) => {
+      texto += `${opcion.numero}. ${opcion.name}\n`;
+    });
+
+    texto += "\nEscribe el número de la especialidad.";
+    texto += "\n\nTambién puedes escribir *menu* para volver al menú principal.";
+
+    return texto.trim();
+  }
+
+  async _procesarFlujoAgendarCita({ textoUsuario, sesion, paciente, contexto }) {
+    if (textoUsuario === "cancelar") {
+      await this._guardarContexto({
+        chatSessionId: sesion.id,
+        currentStep: "MENU_PRINCIPAL",
+        lastIntent: null,
+        temporaryData: {}
+      });
+
+      return [
+        "Agendamiento cancelado.",
+        "",
+        await this._construirMenuPrincipal()
+      ].join("\n");
+    }
+
+    switch (contexto.currentStep) {
+      case "AGENDAR_SELECCION_ESPECIALIDAD":
+        return await this._agendarSeleccionarEspecialidad({
+          textoUsuario,
+          sesion,
+          contexto
+        });
+
+      case "AGENDAR_SELECCION_MEDICO":
+        return await this._agendarSeleccionarMedico({
+          textoUsuario,
+          sesion,
+          contexto
+        });
+
+      case "AGENDAR_INGRESAR_FECHA":
+        return await this._agendarIngresarFecha({
+          textoUsuario,
+          sesion,
+          contexto
+        });
+
+      case "AGENDAR_SELECCION_HORARIO":
+        return await this._agendarSeleccionarHorario({
+          textoUsuario,
+          sesion,
+          contexto
+        });
+
+      case "AGENDAR_MOTIVO":
+        return await this._agendarIngresarMotivo({
+          textoUsuario,
+          sesion,
+          contexto
+        });
+
+      case "AGENDAR_CONFIRMAR":
+        return await this._agendarConfirmar({
+          textoUsuario,
+          sesion,
+          paciente,
+          contexto
+        });
+
+      default:
+        return await this._iniciarFlujoAgendarCita(sesion);
+    }
+  }
+
+  async _agendarSeleccionarEspecialidad({ textoUsuario, sesion, contexto }) {
+    const numero = Number(textoUsuario);
+
+    if (!Number.isInteger(numero)) {
+      return "Por favor escribe el número de la especialidad que deseas seleccionar.";
+    }
+
+    const especialidades = contexto.temporaryData?.especialidades || [];
+    const seleccionada = especialidades.find((x) => x.numero === numero);
+
+    if (!seleccionada) {
+      return "La especialidad seleccionada no es válida. Escribe un número de la lista.";
+    }
+
+    const medicos = await this.doctorRepository.findBySpecialty(seleccionada.id);
+
+    const activos = (medicos || [])
+      .filter((x) => x.isActive && x.attendsWhatsApp)
+      .map((medico, index) => ({
+        numero: index + 1,
+        id: medico.id,
+        name: this._nombreMedico(medico),
+        appointmentDurationMinutes: medico.appointmentDurationMinutes
+      }));
+
+    if (activos.length === 0) {
+      return [
+        `No tenemos médicos disponibles por WhatsApp para ${seleccionada.name}.`,
+        "",
+        "Escribe *menu* para volver al menú principal."
+      ].join("\n");
+    }
+
+    await this._guardarContexto({
+      chatSessionId: sesion.id,
+      currentStep: "AGENDAR_SELECCION_MEDICO",
+      lastIntent: "AGENDAR_CITA",
+      temporaryData: {
+        ...contexto.temporaryData,
+        selectedSpecialty: seleccionada,
+        medicos: activos
+      }
+    });
+
+    let texto = `Seleccionaste ${seleccionada.name}.\n\n`;
+    texto += "Ahora selecciona un médico:\n\n";
+
+    activos.forEach((medico) => {
+      texto += `${medico.numero}. ${medico.name}\n`;
+    });
+
+    texto += "\nEscribe el número del médico.";
+
+    return texto.trim();
+  }
+
+  async _agendarSeleccionarMedico({ textoUsuario, sesion, contexto }) {
+    const numero = Number(textoUsuario);
+
+    if (!Number.isInteger(numero)) {
+      return "Por favor escribe el número del médico que deseas seleccionar.";
+    }
+
+    const medicos = contexto.temporaryData?.medicos || [];
+    const seleccionado = medicos.find((x) => x.numero === numero);
+
+    if (!seleccionado) {
+      return "El médico seleccionado no es válido. Escribe un número de la lista.";
+    }
+
+    await this._guardarContexto({
+      chatSessionId: sesion.id,
+      currentStep: "AGENDAR_INGRESAR_FECHA",
+      lastIntent: "AGENDAR_CITA",
+      temporaryData: {
+        ...contexto.temporaryData,
+        selectedDoctor: seleccionado
+      }
+    });
+
     return [
-      "Perfecto, vamos a agendar tu cita médica.",
-      "Por ahora estoy preparando el flujo de especialidad, médico y horario.",
+      `Seleccionaste ${seleccionado.name}.`,
       "",
-      "Un asistente puede ayudarte si escribes 6."
+      "Ahora escribe la fecha para consultar horarios disponibles.",
+      "Formato: *AAAA-MM-DD*",
+      "",
+      "Ejemplo: 2026-05-28"
+    ].join("\n");
+  }
+
+  async _agendarIngresarFecha({ textoUsuario, sesion, contexto }) {
+    const fecha = textoUsuario.trim();
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      return [
+        "La fecha no tiene el formato correcto.",
+        "Por favor escribe la fecha así: *AAAA-MM-DD*",
+        "",
+        "Ejemplo: 2026-05-28"
+      ].join("\n");
+    }
+
+    const selectedDoctor = contexto.temporaryData?.selectedDoctor;
+
+    if (!selectedDoctor) {
+      return await this._iniciarFlujoAgendarCita(sesion);
+    }
+
+    const disponibilidad = await this.disponibilidadUseCase.ejecutar(
+      selectedDoctor.id,
+      fecha
+    );
+
+    const slots = (disponibilidad.slots || []).map((slot, index) => ({
+      numero: index + 1,
+      inicio: slot.inicio,
+      fin: slot.fin
+    }));
+
+    if (slots.length === 0) {
+      return [
+        "No encontré horarios disponibles para esa fecha.",
+        "",
+        "Escribe otra fecha con formato *AAAA-MM-DD*.",
+        "Ejemplo: 2026-05-29"
+      ].join("\n");
+    }
+
+    await this._guardarContexto({
+      chatSessionId: sesion.id,
+      currentStep: "AGENDAR_SELECCION_HORARIO",
+      lastIntent: "AGENDAR_CITA",
+      temporaryData: {
+        ...contexto.temporaryData,
+        selectedDate: fecha,
+        branchId: disponibilidad.sucursalId,
+        officeId: disponibilidad.consultorioId,
+        slots
+      }
+    });
+
+    let texto = `Estos son los horarios disponibles para ${fecha}:\n\n`;
+
+    slots.slice(0, 10).forEach((slot) => {
+      texto += `${slot.numero}. ${this._formatearHoraSlot(slot.inicio)}\n`;
+    });
+
+    texto += "\nEscribe el número del horario que deseas.";
+
+    return texto.trim();
+  }
+
+  async _agendarSeleccionarHorario({ textoUsuario, sesion, contexto }) {
+    const numero = Number(textoUsuario);
+
+    if (!Number.isInteger(numero)) {
+      return "Por favor escribe el número del horario que deseas seleccionar.";
+    }
+
+    const slots = contexto.temporaryData?.slots || [];
+    const seleccionado = slots.find((x) => x.numero === numero);
+
+    if (!seleccionado) {
+      return "El horario seleccionado no es válido. Escribe un número de la lista.";
+    }
+
+    await this._guardarContexto({
+      chatSessionId: sesion.id,
+      currentStep: "AGENDAR_MOTIVO",
+      lastIntent: "AGENDAR_CITA",
+      temporaryData: {
+        ...contexto.temporaryData,
+        selectedSlot: seleccionado
+      }
+    });
+
+    return [
+      `Seleccionaste el horario ${this._formatearHoraSlot(seleccionado.inicio)}.`,
+      "",
+      "Ahora escribe el motivo de la consulta.",
+      "",
+      "Ejemplo: Dolor de cabeza, control médico, fiebre, chequeo general."
+    ].join("\n");
+  }
+
+  async _agendarIngresarMotivo({ textoUsuario, sesion, contexto }) {
+    const motivo = textoUsuario.trim();
+
+    if (motivo.length < 3) {
+      return "Por favor escribe un motivo de consulta más claro.";
+    }
+
+    const data = {
+      ...contexto.temporaryData,
+      reason: motivo
+    };
+
+    await this._guardarContexto({
+      chatSessionId: sesion.id,
+      currentStep: "AGENDAR_CONFIRMAR",
+      lastIntent: "AGENDAR_CITA",
+      temporaryData: data
+    });
+
+    const resumen = this._construirResumenCita(data);
+
+    return [
+      "Por favor confirma tu cita:",
+      "",
+      resumen,
+      "",
+      "Responde *SI* para confirmar o *NO* para cancelar."
+    ].join("\n");
+  }
+
+  async _agendarConfirmar({ textoUsuario, sesion, paciente, contexto }) {
+    const texto = textoUsuario.trim().toLowerCase();
+
+    if (texto === "no") {
+      await this._guardarContexto({
+        chatSessionId: sesion.id,
+        currentStep: "MENU_PRINCIPAL",
+        lastIntent: null,
+        temporaryData: {}
+      });
+
+      return [
+        "Cita cancelada. No se registró ninguna cita.",
+        "",
+        await this._construirMenuPrincipal()
+      ].join("\n");
+    }
+
+    if (texto !== "si" && texto !== "sí") {
+      return "Por favor responde *SI* para confirmar o *NO* para cancelar.";
+    }
+
+    const data = contexto.temporaryData;
+
+    const startDate = this._slotInicioToIso(data.selectedSlot.inicio);
+
+    const cita = await this.crearAppointmentUseCase.ejecutar({
+      patientId: paciente.id,
+      doctorId: data.selectedDoctor.id,
+      startDate,
+      reason: data.reason,
+      origin: "WHATSAPP",
+      isCreatedByBot: true,
+      observation: "Cita creada desde bot de WhatsApp"
+    });
+
+    await this._guardarContexto({
+      chatSessionId: sesion.id,
+      currentStep: "MENU_PRINCIPAL",
+      lastIntent: null,
+      temporaryData: {
+        lastAppointmentId: cita.id
+      }
+    });
+
+    return [
+      "Tu cita médica ha sido registrada correctamente.",
+      "",
+      `Especialidad: ${data.selectedSpecialty.name}`,
+      `Médico: ${data.selectedDoctor.name}`,
+      `Fecha y hora: ${this._formatearFechaHora(data.selectedSlot.inicio)}`,
+      `Motivo: ${data.reason}`,
+      "",
+      "Te esperamos 15 minutos antes de la hora indicada."
+    ].join("\n");
+  }
+
+  async _guardarContexto({ chatSessionId, currentStep, lastIntent = null, temporaryData = {} }) {
+    return await this.contextRepository.save({
+      chatSessionId,
+      currentStep,
+      lastIntent,
+      temporaryData
+    });
+  }
+
+  _nombreMedico(medico) {
+    const user = medico.user;
+
+    if (!user) {
+      return "Médico";
+    }
+
+    const nombres = [
+      user.firstName,
+      user.lastName
+    ].filter(Boolean).join(" ");
+
+    return nombres || "Médico";
+  }
+
+  _formatearHoraSlot(valor) {
+    if (!valor) return "";
+
+    const partes = String(valor).split(" ");
+
+    if (partes.length >= 2) {
+      return partes[1].substring(0, 5);
+    }
+
+    return String(valor);
+  }
+
+  _formatearFechaHora(valor) {
+    if (!valor) return "";
+
+    const partes = String(valor).split(" ");
+
+    if (partes.length >= 2) {
+      return `${partes[0]} ${partes[1].substring(0, 5)}`;
+    }
+
+    return String(valor);
+  }
+
+  _slotInicioToIso(valor) {
+    const texto = String(valor || "").trim();
+
+    if (texto.includes("T")) {
+      return texto.includes("-05:00") ? texto : `${texto}-05:00`;
+    }
+
+    return `${texto.replace(" ", "T")}-05:00`;
+  }
+
+  _construirResumenCita(data) {
+    return [
+      `Especialidad: ${data.selectedSpecialty?.name}`,
+      `Médico: ${data.selectedDoctor?.name}`,
+      `Fecha y hora: ${this._formatearFechaHora(data.selectedSlot?.inicio)}`,
+      `Motivo: ${data.reason}`
     ].join("\n");
   }
 

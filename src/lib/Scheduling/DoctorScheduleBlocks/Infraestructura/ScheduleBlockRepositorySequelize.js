@@ -36,7 +36,7 @@ class ScheduleBlockRepositorySequelize {
     const data = await ScheduleBlockModel.findAll({
       where: { doctorId },
       include: [{ model: ScheduleBlockTypeModel, as: "blockingType" },
-        { model: UserModel, as: "user" }
+      { model: UserModel, as: "user" }
       ],
       order: [["startDate", "ASC"]]
     });
@@ -59,17 +59,39 @@ class ScheduleBlockRepositorySequelize {
     await ScheduleBlockModel.update(data, { where: { id } });
     return await this.findById(id);
   }
-  
-async findOverlap(doctorId, startDate, endDate, excludeId = null) {
-  const whereCondition = { doctorId, isActive: true,
-    [Op.or]: [ {startDate: { [Op.lt]: endDate }, endDate: { [Op.gt]: startDate }}]
-  };
-  if (excludeId) { whereCondition.id = { [Op.ne]: excludeId };}
-  return await ScheduleBlockModel.findOne({ where: whereCondition });
-}
+
+  async findOverlap(doctorId, startDate, endDate, excludeId = null) {
+    const whereCondition = {
+      doctorId, isActive: true,
+      [Op.or]: [{ startDate: { [Op.lt]: endDate }, endDate: { [Op.gt]: startDate } }]
+    };
+    if (excludeId) { whereCondition.id = { [Op.ne]: excludeId }; }
+    return await ScheduleBlockModel.findOne({ where: whereCondition });
+  }
 
   async softDelete(id) {
     await ScheduleBlockModel.update({ isActive: false }, { where: { id } });
+  }
+
+  async findAllByDoctorAndDate(doctorId, date) {
+    const startOfDay = new Date(`${date}T00:00:00-05:00`);
+    const endOfDay = new Date(`${date}T23:59:59-05:00`);
+
+    const data = await ScheduleBlockModel.findAll({
+      where: {
+        doctorId,
+        isActive: true,
+        startDate: { [Op.lt]: endOfDay },
+        endDate: { [Op.gt]: startOfDay }
+      },
+      include: [
+        { model: ScheduleBlockTypeModel, as: "blockingType" },
+        { model: UserModel, as: "user" }
+      ],
+      order: [["startDate", "ASC"]]
+    });
+
+    return data.map(b => this.toDomain(b));
   }
 }
 
