@@ -9,7 +9,7 @@ class EliminarMedicalPrescriptionDetail {
 
   async ejecutar(id, userIdFromToken) {
     const detail = await this.detailRepo.findById(id);
-    if (!detail || !detail.isActive) throw new NotFoundError("Detalle no encontrado");
+    if (!detail) throw new NotFoundError("Detalle no encontrado");
 
     const prescription = await this.prescriptionRepo.findById(detail.medicalPrescriptionId);
 

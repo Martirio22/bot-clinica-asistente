@@ -7,7 +7,7 @@ class ActualizarChatSessionStatus {
 
   async ejecutar(id, data) {
     const status = await this.statusRepository.findById(id);
-    if (!status || !status.isActive) throw new NotFoundError("Estado de sesión no encontrado");
+    if (!status) throw new NotFoundError("Estado de sesión no encontrado");
 
     return await this.statusRepository.update(id, {
       code: data.code ? data.code.trim().toUpperCase() : status.code,

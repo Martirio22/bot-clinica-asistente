@@ -15,7 +15,7 @@ function setupMedicalCareAssociations() {
   MedicalAttentionModel.belongsTo(DoctorModel, { foreignKey: "doctorId", as: "doctor" });
   
   // MedicalAttention -> Estado Propio
-  MedicalAttentionModel.belongsTo(AttentionStatusModel, { foreignKey: "statusId", as: "status" });
+  MedicalAttentionModel.belongsTo(AttentionStatusModel, { foreignKey: "statusAttentionId", as: "status" });
 
   // Relaciones Inversas para consultas
   AppointmentModel.hasOne(MedicalAttentionModel, { foreignKey: "appointmentId", as: "medicalAttention" });

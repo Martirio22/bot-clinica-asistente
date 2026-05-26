@@ -9,7 +9,7 @@ class ActualizarMedicalPrescriptionDetail {
 
   async ejecutar(id, data, userIdFromToken) {
     const detail = await this.detailRepo.findById(id);
-    if (!detail || !detail.isActive) throw new NotFoundError("Detalle no encontrado");
+    if (!detail) throw new NotFoundError("Detalle no encontrado");
     const prescription = await this.prescriptionRepo.findById(detail.medicalPrescriptionId);
     if (prescription.medicalAttention?.doctor?.userId !== userIdFromToken) {
       throw new ValidationError("No tienes permiso para modificar este detalle");

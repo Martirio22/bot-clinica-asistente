@@ -7,7 +7,7 @@ class ActualizarWhatsappLine {
 
   async ejecutar(id, data) {
     const line = await this.whatsappLineRepository.findById(id);
-    if (!line || !line.isActive) throw new NotFoundError("Línea de WhatsApp no encontrada");
+    if (!line) throw new NotFoundError("Línea de WhatsApp no encontrada");
 
     return await this.whatsappLineRepository.update(id, {
       name: data.name ?? line.name,

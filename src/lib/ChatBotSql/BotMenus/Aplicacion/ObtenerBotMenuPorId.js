@@ -7,7 +7,7 @@ class ObtenerBotMenuPorId {
 
   async ejecutar(id) {
     const menu = await this.botMenuRepository.findById(id);
-    if (!menu || !menu.isActive) throw new NotFoundError("Menú del bot no encontrado");
+    if (!menu) throw new NotFoundError("Menú del bot no encontrado");
     return menu;
   }
 }

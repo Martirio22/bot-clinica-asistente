@@ -7,7 +7,7 @@ class ObtenerBotMenuOptionPorId {
 
   async ejecutar(id) {
     const option = await this.optionRepo.findById(id);
-    if (!option || !option.isActive) throw new NotFoundError("Opción de menú no encontrada");
+    if (!option) throw new NotFoundError("Opción de menú no encontrada");
     return option;
   }
 }

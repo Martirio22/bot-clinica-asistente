@@ -11,9 +11,6 @@ class ActualizarMedicalPrescription {
     if (!prescription) {
         throw new NotFoundError("Receta no encontrada");
     }
-    if (!prescription.isActive) {
-        throw new ValidationError("No se puede modificar una receta médica que está inactiva o eliminada");
-    }
     if (prescription.medicalAttention?.doctor?.userId !== userIdFromToken) {
       throw new ValidationError("No tienes permiso para modificar esta receta");
     }

@@ -64,7 +64,7 @@ module.exports = function registerMedicalCareModule(app){
 
     const medicalPrescriptionController = new MedicalPrescriptionController({
     crear: new CrearMedicalPrescription(medicalPrescriptionRepository, medicalAttentionRepository),
-    enviarWhatsapp: new EnviarPrescriptionWhatsapp(medicalPrescriptionRepository, prescriptionDetailRepository),
+    enviarWhatsapp: new EnviarPrescriptionWhatsapp(medicalPrescriptionRepository),
     listar: new ListarMedicalPrescription(medicalPrescriptionRepository),
     obtener: new ObtenerMedicalPrescriptionPorId(medicalPrescriptionRepository),
     actualizar: new ActualizarMedicalPrescription(medicalPrescriptionRepository),

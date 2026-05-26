@@ -7,7 +7,7 @@ class ObtenerMessageTypePorId {
 
   async ejecutar(id) {
     const messageType = await this.messageTypeRepository.findById(id);
-    if (!messageType || !messageType.isActive) throw new NotFoundError("Tipo de mensaje no encontrado");
+    if (!messageType) throw new NotFoundError("Tipo de mensaje no encontrado");
     return messageType;
   }
 }

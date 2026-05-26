@@ -43,7 +43,7 @@ class BMORepositorySequelize {
 
   async findAllByMenu(menuBotId) {
     const data = await BotMenuOptionModel.findAll({
-      where: { menuBotId, isActive: true },
+      where: { menuBotId },
       order: [["order", "ASC"]]
     });
 

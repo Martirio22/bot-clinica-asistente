@@ -7,7 +7,7 @@ class ActualizarBotIntent {
 
   async ejecutar(id, data) {
     const intent = await this.botIntentRepository.findById(id);
-    if (!intent || !intent.isActive) throw new NotFoundError("Intención del bot no encontrada");
+    if (!intent) throw new NotFoundError("Intención del bot no encontrada");
 
     return await this.botIntentRepository.update(id, {
       code: data.code ? data.code.trim().toUpperCase() : intent.code,

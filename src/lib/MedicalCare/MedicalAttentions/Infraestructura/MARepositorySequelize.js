@@ -29,7 +29,7 @@ class MARepositorySequelize {
 
   async findAllByDoctor(userId) {
   const data = await MedicalAttentionModel.findAll({
-    include: ["patient", "status",
+    include: ["appointment", "patient", "status",
       {association: "doctor", where: { userId: userId }}
     ],
     order: [['startDate', 'DESC']]
