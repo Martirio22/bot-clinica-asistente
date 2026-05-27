@@ -44,6 +44,8 @@ const CrearAppointment = require("../../../Scheduling/Appointments/Aplicacion/Cr
 const ObtenerDisponibilidadMedico = require("../../../Scheduling/Appointments/Aplicacion/ObtenerDisponibilidadPorMedico");
 const MedicalPrescriptionRepositorySequelize = require("../../../MedicalCare/MedicalPrescriptions/Infraestructura/MPRepositorySequelize");
 const GroqMedicalAssistantService = require("../../Infraestructura/Services/GroqMedicalAssistantService");
+const PrescriptionPdfService = require("../../../MedicalCare/MedicalPrescriptions/Infraestructura/Services/PrescriptionPdfService");
+const ExternalWhatsappMediaService = require("../../Infraestructura/Services/ExternalWhatsappMediaService");
 
 module.exports = function registerChatBotModule(app) {
   const chatMessageRepository = new ChatMessageRepositoryMongoose();
@@ -66,6 +68,8 @@ module.exports = function registerChatBotModule(app) {
   const officeRepository = new OfficeRepositorySequelize();
   const medicalPrescriptionRepository = new MedicalPrescriptionRepositorySequelize();
   const groqMedicalAssistantService = new GroqMedicalAssistantService();
+  const prescriptionPdfService = new PrescriptionPdfService();
+  const externalWhatsappMediaService = new ExternalWhatsappMediaService();
 
   const chatMessageController = new ChatMessageController({
     crear: new CrearChatMessage(chatMessageRepository),
@@ -123,7 +127,9 @@ module.exports = function registerChatBotModule(app) {
       disponibilidadUseCase,
       appointmentRepository,
       medicalPrescriptionRepository,
-      groqMedicalAssistantService
+      groqMedicalAssistantService,
+      prescriptionPdfService,
+      externalWhatsappMediaService
     )
   });
 

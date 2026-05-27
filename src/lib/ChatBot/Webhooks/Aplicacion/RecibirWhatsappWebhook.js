@@ -15,7 +15,9 @@ class RecibirWhatsappWebhook {
     disponibilidadUseCase,
     appointmentRepository,
     medicalPrescriptionRepository,
-    groqMedicalAssistantService
+    groqMedicalAssistantService,
+    prescriptionPdfService,
+    externalWhatsappMediaService
   ) {
     this.rawEventRepository = rawEventRepository;
     this.chatMessageRepository = chatMessageRepository;
@@ -33,6 +35,8 @@ class RecibirWhatsappWebhook {
     this.appointmentRepository = appointmentRepository;
     this.medicalPrescriptionRepository = medicalPrescriptionRepository;
     this.groqMedicalAssistantService = groqMedicalAssistantService;
+    this.prescriptionPdfService = prescriptionPdfService;
+    this.externalWhatsappMediaService = externalWhatsappMediaService;
   }
 
   async ejecutar(payload) {
@@ -96,7 +100,7 @@ class RecibirWhatsappWebhook {
         textoUsuario,
         sesion,
         paciente,
-        payload
+        payload: payloadNormalizado
       });
 
       let resultadoWhatsapp = null;
@@ -294,7 +298,7 @@ class RecibirWhatsappWebhook {
     }
 
     if (this._esSeleccionNumerica(texto)) {
-      return await this._resolverOpcionMenuPrincipal(texto, sesion, paciente);
+      return await this._resolverOpcionMenuPrincipal(texto, sesion, paciente, payload);
     }
 
     return [
@@ -352,7 +356,7 @@ class RecibirWhatsappWebhook {
     return texto.trim();
   }
 
-  async _resolverOpcionMenuPrincipal(codigoOpcion, sesion, paciente) {
+  async _resolverOpcionMenuPrincipal(codigoOpcion, sesion, paciente, payload) {
     const menuPrincipal = await this.botMenuRepository.findMainMenu();
 
     if (!menuPrincipal || !menuPrincipal.isActive) {
@@ -392,8 +396,10 @@ class RecibirWhatsappWebhook {
 
       // case "CONSULTAR_RECETA":
       //   return this._respuestaConsultarRecetaTemporal();
+      // case "CONSULTAR_RECETA":
+      //   return await this._iniciarFlujoConsultarReceta(sesion, paciente);
       case "CONSULTAR_RECETA":
-        return await this._iniciarFlujoConsultarReceta(sesion, paciente);
+        return await this._iniciarFlujoConsultarReceta(sesion, paciente, payload);
 
       // case "TRANSFERIR_HUMANO":
       //   await this._transferirAHumano(sesion.id);
@@ -1230,7 +1236,7 @@ class RecibirWhatsappWebhook {
   // _respuestaConsultarRecetaTemporal() {
   //   return "Estoy preparando la consulta de recetas médicas. Por ahora un asistente puede ayudarte escribiendo 6.";
   // }
-  async _iniciarFlujoConsultarReceta(sesion, paciente) {
+  async _iniciarFlujoConsultarReceta(sesion, paciente, payload) {
     if (!this.medicalPrescriptionRepository) {
       throw new Error("MedicalPrescriptionRepository no está configurado en el webhook");
     }
@@ -1240,6 +1246,11 @@ class RecibirWhatsappWebhook {
     const activas = (recetas || [])
       .filter((receta) => receta.isActive)
       .sort((a, b) => new Date(b.issueDate) - new Date(a.issueDate));
+
+    const datosWhatsapp = {
+      to: payload.chatId || payload.from,
+      whatsappLineId: payload.whatsappLineId
+    };
 
     if (activas.length === 0) {
       await this._guardarContexto({
@@ -1264,7 +1275,17 @@ class RecibirWhatsappWebhook {
         temporaryData: {}
       });
 
-      return this._formatearRecetaCompleta(activas[0]);
+      await this._enviarRecetaPdfPorWhatsapp({
+        receta: activas[0],
+        to: datosWhatsapp.to,
+        whatsappLineId: datosWhatsapp.whatsappLineId
+      });
+
+      return [
+        this._formatearRecetaCompleta(activas[0]),
+        "",
+        "También te envié la receta en PDF."
+      ].join("\n");
     }
 
     const opciones = activas.slice(0, 10).map((receta, index) => ({
@@ -1280,7 +1301,8 @@ class RecibirWhatsappWebhook {
       currentStep: "RECETA_SELECCIONAR",
       lastIntent: "CONSULTAR_RECETA",
       temporaryData: {
-        recetas: opciones
+        recetas: opciones,
+        whatsapp: datosWhatsapp
       }
     });
 
@@ -1317,7 +1339,10 @@ class RecibirWhatsappWebhook {
     }
 
     if (contexto.currentStep !== "RECETA_SELECCIONAR") {
-      return await this._iniciarFlujoConsultarReceta(sesion, paciente);
+      return await this._iniciarFlujoConsultarReceta(sesion, paciente, {
+        from: paciente.whatsappPhone,
+        whatsappLineId: sesion.whatsappLineId
+      });
     }
 
     const numero = Number(texto);
@@ -1335,15 +1360,6 @@ class RecibirWhatsappWebhook {
 
     const receta = await this.medicalPrescriptionRepository.findById(seleccionada.id);
 
-    await this._guardarContexto({
-      chatSessionId: sesion.id,
-      currentStep: "MENU_PRINCIPAL",
-      lastIntent: null,
-      temporaryData: {
-        lastPrescriptionId: receta?.id || seleccionada.id
-      }
-    });
-
     if (!receta) {
       return [
         "No pude encontrar la receta seleccionada.",
@@ -1352,7 +1368,61 @@ class RecibirWhatsappWebhook {
       ].join("\n");
     }
 
-    return this._formatearRecetaCompleta(receta);
+    const whatsapp = contexto.temporaryData?.whatsapp || {};
+
+    await this._enviarRecetaPdfPorWhatsapp({
+      receta,
+      to: whatsapp.to,
+      whatsappLineId: whatsapp.whatsappLineId
+    });
+
+    await this._guardarContexto({
+      chatSessionId: sesion.id,
+      currentStep: "MENU_PRINCIPAL",
+      lastIntent: null,
+      temporaryData: {
+        lastPrescriptionId: receta.id
+      }
+    });
+
+    return [
+      this._formatearRecetaCompleta(receta),
+      "",
+      "También te envié la receta en PDF."
+    ].join("\n");
+  }
+
+  async _enviarRecetaPdfPorWhatsapp({ receta, to, whatsappLineId }) {
+    if (!this.prescriptionPdfService || !this.externalWhatsappMediaService) {
+      console.warn("Servicios de PDF o media WhatsApp no configurados");
+      return null;
+    }
+
+    if (!receta || !to || !whatsappLineId) {
+      console.warn("Datos incompletos para enviar PDF de receta", {
+        recetaId: receta?.id,
+        to,
+        whatsappLineId
+      });
+      return null;
+    }
+
+    try {
+      const pdf = await this.prescriptionPdfService.generarPdf(receta);
+
+      const publicUrl = `${process.env.BACKEND_PUBLIC_URL || "http://localhost:3977"}${pdf.relativeUrl}`;
+
+      return await this.externalWhatsappMediaService.enviarMediaUrl({
+        to,
+        whatsappLineId,
+        url: publicUrl,
+        caption: "Aquí tienes tu receta médica en PDF."
+      });
+    } catch (error) {
+      console.error("Error enviando PDF de receta por WhatsApp:", error.message);
+
+      return null;
+    }
   }
 
   _formatearRecetaCompleta(receta) {

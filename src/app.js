@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
+
 const registerSecurityModule = require("./lib/Security/Infraestructura/http");
 const registerChatBotModule = require("./lib/ChatBot/Infraestructura/http");
 const registerClinicModule = require("./lib/Clinic/Infraestructura/http");
@@ -15,15 +17,17 @@ function buildApp() {
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: true }));
 
+  // Archivos públicos: PDFs, imágenes, documentos, etc.
+  app.use("/public", express.static(path.join(process.cwd(), "public")));
+
   app.get("/health", (req, res) =>
     res.json({ ok: true, service: "hx-odm-js-clinica" })
   );
 
-  // Módulos reales del sistema según el modelo enviado.
-  registerSecurityModule(app);   // users, roles, user_roles, auth, refresh_tokens
-  registerChatBotModule(app);    // chat_messages, webhooks, logs de entrega
-  registerClinicModule(app);     // branches, doctors, offices, patients, specialties, assistants
-  registerSchedulingModule(app); // appointments, schedule, authorizations, status
+  registerSecurityModule(app);
+  registerChatBotModule(app);
+  registerClinicModule(app);
+  registerSchedulingModule(app);
   registerMedicalCareModule(app);
   registerChatBotSqlModule(app);
 
