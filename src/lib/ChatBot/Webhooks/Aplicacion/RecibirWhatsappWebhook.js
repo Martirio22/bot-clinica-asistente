@@ -14,7 +14,8 @@ class RecibirWhatsappWebhook {
     crearAppointmentUseCase,
     disponibilidadUseCase,
     appointmentRepository,
-    medicalPrescriptionRepository
+    medicalPrescriptionRepository,
+    groqMedicalAssistantService
   ) {
     this.rawEventRepository = rawEventRepository;
     this.chatMessageRepository = chatMessageRepository;
@@ -31,6 +32,7 @@ class RecibirWhatsappWebhook {
     this.disponibilidadUseCase = disponibilidadUseCase;
     this.appointmentRepository = appointmentRepository;
     this.medicalPrescriptionRepository = medicalPrescriptionRepository;
+    this.groqMedicalAssistantService = groqMedicalAssistantService;
   }
 
   async ejecutar(payload) {
@@ -282,6 +284,15 @@ class RecibirWhatsappWebhook {
       });
     }
 
+    if (contexto?.lastIntent === "AGENTE_IA_MEDICO") {
+      return await this._procesarFlujoAgenteIaMedico({
+        textoUsuario: texto,
+        sesion,
+        paciente,
+        contexto
+      });
+    }
+
     if (this._esSeleccionNumerica(texto)) {
       return await this._resolverOpcionMenuPrincipal(texto, sesion, paciente);
     }
@@ -387,14 +398,16 @@ class RecibirWhatsappWebhook {
       // case "TRANSFERIR_HUMANO":
       //   await this._transferirAHumano(sesion.id);
       //   return "Te estamos asignando un asistente clínico. Por favor espera un momento, pronto una persona de nuestro equipo continuará la atención.";
+      // case "TRANSFERIR_HUMANO":
+      //   return [
+      //     "La opción de hablar con un asistente todavía está en configuración.",
+      //     "",
+      //     "Por ahora puedes continuar usando el menú principal.",
+      //     "",
+      //     await this._construirMenuPrincipal()
+      //   ].join("\n");
       case "TRANSFERIR_HUMANO":
-        return [
-          "La opción de hablar con un asistente todavía está en configuración.",
-          "",
-          "Por ahora puedes continuar usando el menú principal.",
-          "",
-          await this._construirMenuPrincipal()
-        ].join("\n");
+        return await this._iniciarFlujoAgenteIaMedico(sesion);
 
       case "MOSTRAR_MENU":
       case "MOSTRAR_OTRO_MENU":
@@ -439,18 +452,90 @@ class RecibirWhatsappWebhook {
     return texto.trim();
   }
 
-  async _transferirAHumano(chatSessionId) {
-    const statusId = await this.chatSessionRepository.findStatusByCode("ESPERANDO_ASISTENTE");
+  // async _transferirAHumano(chatSessionId) {
+  //   const statusId = await this.chatSessionRepository.findStatusByCode("ESPERANDO_ASISTENTE");
 
-    if (!statusId) {
-      throw new Error("Estado ESPERANDO_ASISTENTE no configurado");
+  //   if (!statusId) {
+  //     throw new Error("Estado ESPERANDO_ASISTENTE no configurado");
+  //   }
+
+  //   await this.chatSessionRepository.update(chatSessionId, {
+  //     sessionStatusId: statusId,
+  //     handledByBot: false,
+  //     assignedAssistantId: null
+  //   });
+  // }
+  async _iniciarFlujoAgenteIaMedico(sesion) {
+    await this._guardarContexto({
+      chatSessionId: sesion.id,
+      currentStep: "IA_ESPERANDO_SINTOMAS",
+      lastIntent: "AGENTE_IA_MEDICO",
+      temporaryData: {}
+    });
+
+    return [
+      "Soy el agente médico IA.",
+      "",
+      "Cuéntame qué síntomas tienes, desde cuándo los tienes y tu edad aproximada.",
+      "",
+      "Ejemplo:",
+      "Tengo dolor de garganta desde hace 2 días, fiebre y tengo 25 años.",
+      "",
+      "Si tienes dolor fuerte en el pecho, dificultad para respirar, desmayo, sangrado abundante o síntomas graves, acude a emergencias inmediatamente."
+    ].join("\n");
+  }
+
+  async _procesarFlujoAgenteIaMedico({ textoUsuario, sesion, paciente, contexto }) {
+    const sintomas = String(textoUsuario || "").trim();
+
+    if (sintomas.length < 8) {
+      return [
+        "Por favor descríbeme un poco mejor tus síntomas.",
+        "",
+        "Indica qué sientes, desde cuándo y tu edad aproximada.",
+        "",
+        "Ejemplo: Tengo dolor abdominal desde ayer, náuseas y tengo 30 años."
+      ].join("\n");
     }
 
-    await this.chatSessionRepository.update(chatSessionId, {
-      sessionStatusId: statusId,
-      handledByBot: false,
-      assignedAssistantId: null
+    let respuestaIa = "";
+
+    try {
+      respuestaIa = await this.groqMedicalAssistantService.recomendarEspecialista({
+        symptoms: sintomas
+      });
+    } catch (error) {
+      console.error("Error consultando agente IA:", error);
+
+      await this._guardarContexto({
+        chatSessionId: sesion.id,
+        currentStep: "MENU_PRINCIPAL",
+        lastIntent: null,
+        temporaryData: {}
+      });
+
+      return [
+        "En este momento no pude consultar al agente IA.",
+        "",
+        "Por favor intenta nuevamente más tarde o escribe *menu* para volver al menú principal."
+      ].join("\n");
+    }
+
+    await this._guardarContexto({
+      chatSessionId: sesion.id,
+      currentStep: "MENU_PRINCIPAL",
+      lastIntent: null,
+      temporaryData: {
+        lastAiSymptoms: sintomas,
+        lastAiResponse: respuestaIa
+      }
     });
+
+    return [
+      respuestaIa,
+      "",
+      "Puedes escribir *menu* para volver al menú principal."
+    ].join("\n");
   }
 
   _respuestaInfoClinica() {
