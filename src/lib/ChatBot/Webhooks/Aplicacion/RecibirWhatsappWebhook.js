@@ -13,7 +13,8 @@ class RecibirWhatsappWebhook {
     doctorRepository,
     crearAppointmentUseCase,
     disponibilidadUseCase,
-    appointmentRepository
+    appointmentRepository,
+    medicalPrescriptionRepository
   ) {
     this.rawEventRepository = rawEventRepository;
     this.chatMessageRepository = chatMessageRepository;
@@ -29,6 +30,7 @@ class RecibirWhatsappWebhook {
     this.crearAppointmentUseCase = crearAppointmentUseCase;
     this.disponibilidadUseCase = disponibilidadUseCase;
     this.appointmentRepository = appointmentRepository;
+    this.medicalPrescriptionRepository = medicalPrescriptionRepository;
   }
 
   async ejecutar(payload) {
@@ -271,6 +273,15 @@ class RecibirWhatsappWebhook {
       });
     }
 
+    if (contexto?.lastIntent === "CONSULTAR_RECETA") {
+      return await this._procesarFlujoConsultarReceta({
+        textoUsuario: texto,
+        sesion,
+        paciente,
+        contexto
+      });
+    }
+
     if (this._esSeleccionNumerica(texto)) {
       return await this._resolverOpcionMenuPrincipal(texto, sesion, paciente);
     }
@@ -368,8 +379,10 @@ class RecibirWhatsappWebhook {
       case "CONSULTAR_CITAS":
         return await this._respuestaConsultarCitas(paciente);
 
+      // case "CONSULTAR_RECETA":
+      //   return this._respuestaConsultarRecetaTemporal();
       case "CONSULTAR_RECETA":
-        return this._respuestaConsultarRecetaTemporal();
+        return await this._iniciarFlujoConsultarReceta(sesion, paciente);
 
       // case "TRANSFERIR_HUMANO":
       //   await this._transferirAHumano(sesion.id);
@@ -1129,8 +1142,208 @@ class RecibirWhatsappWebhook {
     return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
   }
 
-  _respuestaConsultarRecetaTemporal() {
-    return "Estoy preparando la consulta de recetas médicas. Por ahora un asistente puede ayudarte escribiendo 6.";
+  // _respuestaConsultarRecetaTemporal() {
+  //   return "Estoy preparando la consulta de recetas médicas. Por ahora un asistente puede ayudarte escribiendo 6.";
+  // }
+  async _iniciarFlujoConsultarReceta(sesion, paciente) {
+    if (!this.medicalPrescriptionRepository) {
+      throw new Error("MedicalPrescriptionRepository no está configurado en el webhook");
+    }
+
+    const recetas = await this.medicalPrescriptionRepository.findAllByPatient(paciente.id);
+
+    const activas = (recetas || [])
+      .filter((receta) => receta.isActive)
+      .sort((a, b) => new Date(b.issueDate) - new Date(a.issueDate));
+
+    if (activas.length === 0) {
+      await this._guardarContexto({
+        chatSessionId: sesion.id,
+        currentStep: "MENU_PRINCIPAL",
+        lastIntent: null,
+        temporaryData: {}
+      });
+
+      return [
+        "No encontré recetas médicas registradas a tu nombre.",
+        "",
+        "Puedes escribir *menu* para volver al menú principal."
+      ].join("\n");
+    }
+
+    if (activas.length === 1) {
+      await this._guardarContexto({
+        chatSessionId: sesion.id,
+        currentStep: "MENU_PRINCIPAL",
+        lastIntent: null,
+        temporaryData: {}
+      });
+
+      return this._formatearRecetaCompleta(activas[0]);
+    }
+
+    const opciones = activas.slice(0, 10).map((receta, index) => ({
+      numero: index + 1,
+      id: receta.id,
+      prescriptionCode: receta.prescriptionCode,
+      issueDate: receta.issueDate,
+      doctorName: this._nombreMedicoDesdeReceta(receta)
+    }));
+
+    await this._guardarContexto({
+      chatSessionId: sesion.id,
+      currentStep: "RECETA_SELECCIONAR",
+      lastIntent: "CONSULTAR_RECETA",
+      temporaryData: {
+        recetas: opciones
+      }
+    });
+
+    let texto = "Encontré estas recetas médicas a tu nombre:\n\n";
+
+    opciones.forEach((receta) => {
+      texto += `${receta.numero}. Receta ${receta.prescriptionCode || "Sin código"}\n`;
+      texto += `   Fecha: ${this._formatearFechaReceta(receta.issueDate)}\n`;
+      texto += `   Médico: ${receta.doctorName}\n\n`;
+    });
+
+    texto += "Escribe el número de la receta que deseas consultar.";
+    texto += "\nTambién puedes escribir *menu* para volver al menú principal.";
+
+    return texto.trim();
+  }
+
+  async _procesarFlujoConsultarReceta({ textoUsuario, sesion, paciente, contexto }) {
+    const texto = String(textoUsuario || "").trim().toLowerCase();
+
+    if (texto === "cancelar") {
+      await this._guardarContexto({
+        chatSessionId: sesion.id,
+        currentStep: "MENU_PRINCIPAL",
+        lastIntent: null,
+        temporaryData: {}
+      });
+
+      return [
+        "Consulta de receta cancelada.",
+        "",
+        await this._construirMenuPrincipal()
+      ].join("\n");
+    }
+
+    if (contexto.currentStep !== "RECETA_SELECCIONAR") {
+      return await this._iniciarFlujoConsultarReceta(sesion, paciente);
+    }
+
+    const numero = Number(texto);
+
+    if (!Number.isInteger(numero)) {
+      return "Por favor escribe el número de la receta que deseas consultar.";
+    }
+
+    const recetas = contexto.temporaryData?.recetas || [];
+    const seleccionada = recetas.find((receta) => receta.numero === numero);
+
+    if (!seleccionada) {
+      return "La opción seleccionada no es válida. Escribe un número de la lista.";
+    }
+
+    const receta = await this.medicalPrescriptionRepository.findById(seleccionada.id);
+
+    await this._guardarContexto({
+      chatSessionId: sesion.id,
+      currentStep: "MENU_PRINCIPAL",
+      lastIntent: null,
+      temporaryData: {
+        lastPrescriptionId: receta?.id || seleccionada.id
+      }
+    });
+
+    if (!receta) {
+      return [
+        "No pude encontrar la receta seleccionada.",
+        "",
+        "Escribe *menu* para volver al menú principal."
+      ].join("\n");
+    }
+
+    return this._formatearRecetaCompleta(receta);
+  }
+
+  _formatearRecetaCompleta(receta) {
+    const detalles = (receta.items || [])
+      .filter((item) => item.isActive)
+      .sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+
+    let texto = "Tu receta médica es:\n\n";
+
+    texto += `Receta: ${receta.prescriptionCode || "Sin código"}\n`;
+    texto += `Fecha: ${this._formatearFechaReceta(receta.issueDate)}\n`;
+    texto += `Médico: ${this._nombreMedicoDesdeReceta(receta)}\n\n`;
+
+    if (detalles.length === 0) {
+      texto += "Esta receta no tiene medicamentos registrados.\n\n";
+    } else {
+      texto += "Medicamentos:\n\n";
+
+      detalles.forEach((item, index) => {
+        texto += `${index + 1}. ${item.medicine}\n`;
+        texto += `   Dosis: ${item.dose || "No registrada"}\n`;
+        texto += `   Frecuencia: ${item.frequency || "No registrada"}\n`;
+        texto += `   Duración: ${item.duration || "No registrada"}\n`;
+
+        if (item.indications) {
+          texto += `   Indicaciones: ${item.indications}\n`;
+        }
+
+        texto += "\n";
+      });
+    }
+
+    if (receta.generalIndications) {
+      texto += "Indicaciones generales:\n";
+      texto += `${receta.generalIndications}\n\n`;
+    }
+
+    texto += "Puedes escribir *menu* para volver al menú principal.";
+
+    return texto.trim();
+  }
+
+  _nombreMedicoDesdeReceta(receta) {
+    const doctor = receta.medicalAttention?.doctor;
+    const user = doctor?.user;
+
+    if (user) {
+      const nombre = [
+        user.firstName,
+        user.lastName
+      ].filter(Boolean).join(" ");
+
+      if (nombre) return nombre;
+    }
+
+    if (doctor?.professionalRegistry) {
+      return `Médico registro ${doctor.professionalRegistry}`;
+    }
+
+    return "Médico no registrado";
+  }
+
+  _formatearFechaReceta(valor) {
+    if (!valor) return "Fecha no registrada";
+
+    const fecha = new Date(valor);
+
+    if (isNaN(fecha.getTime())) {
+      return String(valor);
+    }
+
+    const yyyy = fecha.getFullYear();
+    const mm = String(fecha.getMonth() + 1).padStart(2, "0");
+    const dd = String(fecha.getDate()).padStart(2, "0");
+
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   async _guardarLogOk(payload, startTime) {

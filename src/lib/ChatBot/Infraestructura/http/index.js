@@ -42,6 +42,8 @@ const BranchRepositorySequelize = require("../../../Clinic/Branches/Infraestruct
 const OfficeRepositorySequelize = require("../../../Clinic/Offices/Infraestructura/OfficeRepositorySequelize");
 const CrearAppointment = require("../../../Scheduling/Appointments/Aplicacion/CrearAppointment");
 const ObtenerDisponibilidadMedico = require("../../../Scheduling/Appointments/Aplicacion/ObtenerDisponibilidadPorMedico");
+const MedicalPrescriptionRepositorySequelize = require("../../../MedicalCare/MedicalPrescriptions/Infraestructura/MPRepositorySequelize");
+const GroqMedicalAssistantService = require("../../Infraestructura/Services/GroqMedicalAssistantService");
 
 module.exports = function registerChatBotModule(app) {
   const chatMessageRepository = new ChatMessageRepositoryMongoose();
@@ -62,6 +64,8 @@ module.exports = function registerChatBotModule(app) {
   const scheduleBlockRepository = new ScheduleBlockRepositorySequelize();
   const branchRepository = new BranchRepositorySequelize();
   const officeRepository = new OfficeRepositorySequelize();
+  const medicalPrescriptionRepository = new MedicalPrescriptionRepositorySequelize();
+  const groqMedicalAssistantService = new GroqMedicalAssistantService();
 
   const chatMessageController = new ChatMessageController({
     crear: new CrearChatMessage(chatMessageRepository),
@@ -117,7 +121,9 @@ module.exports = function registerChatBotModule(app) {
       doctorRepository,
       crearAppointmentUseCase,
       disponibilidadUseCase,
-      appointmentRepository
+      appointmentRepository,
+      medicalPrescriptionRepository,
+      groqMedicalAssistantService
     )
   });
 
